@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
-<title>SCAPE&deg; &mdash; Chaos&#8209;Pendel</title>
+<title>SCAPE&deg; &mdash; Wetter ist Chaos</title>
 <meta name="description" content="Ein Doppel- oder Dreifachpendel im Browser: stelle zwei Pendel selbst ein und beobachte, wie aus winzigen Unterschieden g&auml;nzlich verschiedene Wege werden &mdash; ein SCAPE&deg;-Projekt &uuml;ber das Chaos hinter der Wettervorhersage." />
 <meta name="theme-color" content="#f2e2c0" />
 <script>
@@ -73,10 +73,6 @@
   }
   .topbar-right{
     display:flex; flex-direction:column; align-items:flex-end; gap:8px;
-  }
-  .topbar-tag{
-    font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
-    text-align:right; color:var(--ink); max-width:120px;
   }
   #view-toggle{
     border:2px solid var(--ink); background:var(--paper); color:var(--ink);
@@ -160,12 +156,11 @@
   .seg-btn.editor-a.active{ background:var(--rust); border-color:var(--rust); color:#fff; }
   .seg-btn.editor-b.active{ background:var(--navy); border-color:var(--navy); color:#fff; }
 
-  .copy-link{
-    background:none; border:none; font-family:inherit; font-weight:800; font-size:10.5px;
-    text-transform:uppercase; letter-spacing:.03em; color:var(--ink); text-decoration:underline;
-    cursor:pointer; padding:0; margin:-4px 0 14px; display:block;
-  }
-  .copy-link:disabled{ opacity:.35; cursor:default; text-decoration:none; }
+  @keyframes badge-pulse{ 0%,100%{ background:var(--paper); } 50%{ background:var(--bright-yellow); } }
+  .stage-hint-badge.attn{ animation:badge-pulse 1.1s ease-in-out infinite; }
+
+  @keyframes tab-pulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(40,52,143,0); } 50%{ box-shadow:0 0 0 6px rgba(40,52,143,.35); } }
+  .seg-btn.attn{ animation:tab-pulse 1.1s ease-in-out infinite; }
 
   /* ============ SIM STAGE ============ */
   .stage-card{
@@ -281,7 +276,6 @@
       <span class="sub">Wetter, Klima, Mensch</span>
     </div>
     <div class="topbar-right">
-      <div class="topbar-tag">Chaos&#8209;Labor</div>
       <button id="view-toggle" type="button"></button>
     </div>
   </header>
@@ -304,18 +298,19 @@
       </svg>
     </div>
     <div class="poster-copy">
-      <h1 class="poster-title">Chaos&#8209;<br>Pendel</h1>
+      <h1 class="poster-title">Wetter ist Chaos</h1>
       <p class="poster-tagline">Zwei fast identische Starts. Zwei v&ouml;llig verschiedene Wege.</p>
     </div>
   </div>
 
   <main>
     <div class="intro-blurb">
-      <p class="blurb"><b>So funktioniert's:</b> Stelle unten zwei Pendel per Fingerzug selbst ein &mdash; erst Rot, dann Blau, fast identisch oder v&ouml;llig unterschiedlich, ganz wie du m&ouml;chtest. Dr&uuml;cke <b>Start</b> und beobachte, wie sich ihre Wege trennen. Alles l&auml;uft direkt in deinem Browser, ganz ohne Server.</p>
+      <p class="blurb"><b>So funktioniert's:</b> Stelle unten zwei Pendel per Fingerzug selbst ein &mdash; erst Rot, dann Blau, fast identisch oder v&ouml;llig unterschiedlich, ganz wie du m&ouml;chtest. Dr&uuml;cke <b>Start</b> und beobachte, wie sich ihre Wege trennen.</p>
     </div>
 
     <div class="section-label first">Pendelart</div>
     <div class="seg-row" id="mode-row">
+      <button class="seg-btn" id="mode-simple" data-n="1">Einfachpendel</button>
       <button class="seg-btn active" id="mode-double" data-n="2">Doppelpendel</button>
       <button class="seg-btn" id="mode-triple" data-n="3">Dreifachpendel</button>
     </div>
@@ -325,7 +320,6 @@
       <button class="seg-btn editor-a active" id="editor-a" data-editor="A"><i></i>Rot</button>
       <button class="seg-btn editor-b" id="editor-b" data-editor="B"><i></i>Blau</button>
     </div>
-    <button class="copy-link" id="copy-link">Blau = Position von Rot</button>
 
     <div class="stage-card">
       <div class="stage" id="stage">
@@ -342,8 +336,6 @@
     <div class="readout" id="readout">
       <div>Status<b id="ro-status">Bereit</b></div>
       <div>Zeit<b id="ro-zeit">0,0&nbsp;s</b></div>
-      <div>Start&#8209;Abstand<b id="ro-start-dist">&mdash;</b></div>
-      <div>Aktueller Abstand<b id="ro-dist">&mdash;</b></div>
     </div>
 
     <div class="btn-row">
@@ -501,16 +493,14 @@
   var hintBadge = document.getElementById('stage-hint');
   var roStatus = document.getElementById('ro-status');
   var roZeit = document.getElementById('ro-zeit');
-  var roStartDist = document.getElementById('ro-start-dist');
-  var roDist = document.getElementById('ro-dist');
 
   var modeRow = document.getElementById('mode-row');
+  var modeSimpleBtn = document.getElementById('mode-simple');
   var modeDoubleBtn = document.getElementById('mode-double');
   var modeTripleBtn = document.getElementById('mode-triple');
   var editorRow = document.getElementById('editor-row');
   var editorABtn = document.getElementById('editor-a');
   var editorBBtn = document.getElementById('editor-b');
-  var copyLink = document.getElementById('copy-link');
   var legendA = document.getElementById('legend-a');
   var legendB = document.getElementById('legend-b');
 
@@ -656,6 +646,27 @@
     return null;
   }
 
+  // ============ IDLE HINT (nudge towards Blau after Rot goes quiet) ============
+  var idleTimer = null;
+
+  function clearIdleHint() {
+    if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+    hintBadge.classList.remove('attn');
+    editorBBtn.classList.remove('attn');
+  }
+
+  function scheduleBlauPrompt() {
+    if (idleTimer) clearTimeout(idleTimer);
+    idleTimer = setTimeout(function () {
+      idleTimer = null;
+      if (mode !== STATE_SETUP || activeEditor !== 'A') return;
+      hintBadge.textContent = 'Jetzt Blau in Position ziehen';
+      hintBadge.style.display = '';
+      hintBadge.classList.add('attn');
+      editorBBtn.classList.add('attn');
+    }, 3000);
+  }
+
   function onPointerDown(ev) {
     if (mode !== STATE_SETUP) return;
     var pt = localPoint(ev);
@@ -663,6 +674,7 @@
     if (idx === null) return;
     ev.preventDefault();
     drag = idx;
+    clearIdleHint();
     hintBadge.style.display = 'none';
     onPointerMove(ev);
   }
@@ -680,7 +692,10 @@
     renderSetup();
   }
 
-  function onPointerUp() { drag = null; }
+  function onPointerUp() {
+    if (drag !== null && mode === STATE_SETUP && activeEditor === 'A') scheduleBlauPrompt();
+    drag = null;
+  }
 
   stage.addEventListener('mousedown', onPointerDown);
   window.addEventListener('mousemove', onPointerMove);
@@ -696,32 +711,29 @@
     PARAMS.l = new Array(n).fill(1);
     stateA = zeroState(n);
     stateB = zeroState(n);
+    modeSimpleBtn.classList.toggle('active', n === 1);
     modeDoubleBtn.classList.toggle('active', n === 2);
     modeTripleBtn.classList.toggle('active', n === 3);
     layout();
   }
 
   function setEditor(who) {
+    clearIdleHint();
     activeEditor = who;
     editorABtn.classList.toggle('active', who === 'A');
     editorBBtn.classList.toggle('active', who === 'B');
     legendA.classList.toggle('editing', who === 'A');
     legendB.classList.toggle('editing', who === 'B');
-    copyLink.disabled = who !== 'B';
     hintBadge.style.display = '';
     hintBadge.textContent = who === 'A' ? 'Ziehe Rot in Position' : 'Ziehe Blau in Position';
     renderSetup();
   }
 
+  modeSimpleBtn.addEventListener('click', function () { if (mode === STATE_SETUP) setN(1); });
   modeDoubleBtn.addEventListener('click', function () { if (mode === STATE_SETUP) setN(2); });
   modeTripleBtn.addEventListener('click', function () { if (mode === STATE_SETUP) setN(3); });
   editorABtn.addEventListener('click', function () { if (mode === STATE_SETUP) setEditor('A'); });
   editorBBtn.addEventListener('click', function () { if (mode === STATE_SETUP) setEditor('B'); });
-  copyLink.addEventListener('click', function () {
-    if (mode !== STATE_SETUP) return;
-    stateB = stateA.slice();
-    renderSetup();
-  });
 
   // ============ SIM LOOP ============
   var PHYS_DT = 1 / 1000;
@@ -730,13 +742,6 @@
   var lastT = 0;
 
   function fmt1(n) { return n.toFixed(1).replace('.', ','); }
-  function fmtCm(m) { return fmt1(m * 100) + ' cm'; }
-
-  function tipDistance() {
-    var pa = jointPositions(stateA, PARAMS)[PARAMS.N - 1];
-    var pb = jointPositions(stateB, PARAMS)[PARAMS.N - 1];
-    return Math.hypot(pa.x - pb.x, pa.y - pb.y);
-  }
 
   function step(now) {
     if (!running) return;
@@ -766,18 +771,16 @@
     drawPendulum(stateA, '#c65a2a', 1);
 
     roZeit.textContent = fmt1(elapsed) + ' s';
-    roDist.textContent = fmtCm(tipDistance());
 
     requestAnimationFrame(step);
   }
 
   function setControlsEnabled(enabled) {
+    modeSimpleBtn.disabled = !enabled;
     modeDoubleBtn.disabled = !enabled;
     modeTripleBtn.disabled = !enabled;
     editorABtn.disabled = !enabled;
     editorBBtn.disabled = !enabled;
-    if (!enabled) copyLink.disabled = true;
-    else copyLink.disabled = activeEditor !== 'B';
   }
 
   function setPrimary(label, sub, iconPath, filled) {
@@ -794,10 +797,9 @@
     elapsed = 0;
     lastPrevA = null;
     lastPrevB = null;
-    roStartDist.textContent = fmtCm(tipDistance());
+    clearIdleHint();
     roStatus.textContent = 'Läuft';
     roZeit.textContent = '0,0 s';
-    roDist.textContent = fmtCm(tipDistance());
     hintBadge.style.display = 'none';
     legendA.classList.remove('editing');
     legendB.classList.remove('editing');
@@ -836,8 +838,6 @@
     setPrimary('Start', 'Beide Pendel loslassen', ICON_PLAY);
     roStatus.textContent = 'Bereit';
     roZeit.textContent = '0,0 s';
-    roStartDist.textContent = '—';
-    roDist.textContent = '—';
     setEditor('A');
     trailCtx.fillStyle = '#f2e2c0';
     trailCtx.fillRect(0, 0, W, H);
