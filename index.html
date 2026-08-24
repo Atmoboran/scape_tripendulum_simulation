@@ -6,6 +6,19 @@
 <title>SCAPE&deg; &mdash; Chaos&#8209;Pendel</title>
 <meta name="description" content="Ein Doppel- oder Dreifachpendel im Browser: stelle zwei Pendel selbst ein und beobachte, wie aus winzigen Unterschieden g&auml;nzlich verschiedene Wege werden &mdash; ein SCAPE&deg;-Projekt &uuml;ber das Chaos hinter der Wettervorhersage." />
 <meta name="theme-color" content="#f2e2c0" />
+<script>
+  (function () {
+    var mode;
+    try {
+      var stored = localStorage.getItem("scapeViewMode");
+      mode = (stored === "mobile" || stored === "desktop") ? stored : null;
+    } catch (e) {}
+    if (!mode) {
+      mode = window.matchMedia("(max-width: 699px)").matches ? "mobile" : "desktop";
+    }
+    document.documentElement.setAttribute("data-view", mode);
+  })();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -58,10 +71,19 @@
     display:block; margin-top:4px; font-size:10px; font-weight:700;
     letter-spacing:.14em; text-transform:uppercase;
   }
+  .topbar-right{
+    display:flex; flex-direction:column; align-items:flex-end; gap:8px;
+  }
   .topbar-tag{
     font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
     text-align:right; color:var(--ink); max-width:120px;
   }
+  #view-toggle{
+    border:2px solid var(--ink); background:var(--paper); color:var(--ink);
+    font-family:inherit; font-weight:800; font-size:9.5px; letter-spacing:.05em;
+    text-transform:uppercase; padding:5px 8px; cursor:pointer; white-space:nowrap;
+  }
+  #view-toggle:active{ background:var(--ink); color:var(--paper); }
 
   /* ============ POSTER HERO ============ */
   .poster{
@@ -229,6 +251,25 @@
     padding:26px 20px 34px; border-top:2px solid var(--ink);
     font-size:11px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; line-height:1.6;
   }
+
+  /* ============ DESKTOP VIEW ============
+     Base styles above = mobile / vertical phone (the primary target).
+     Overrides below apply when the viewport is wide (auto-detected) or
+     when a visitor explicitly picks the desktop view via the toggle. */
+  :root[data-view="desktop"] .wrap{ max-width:760px; }
+  :root[data-view="desktop"] .poster-title{ font-size:clamp(26px,5vw,38px); }
+  :root[data-view="desktop"] .explainer h2{ font-size:22px; }
+  :root[data-view="desktop"] p.blurb{ font-size:15.5px; }
+  :root[data-view="desktop"] .stage-card{
+    max-width:460px; margin-left:auto; margin-right:auto;
+  }
+  :root[data-view="desktop"] .btn-row{ max-width:460px; margin:0 auto; }
+  :root[data-view="desktop"] #sim-primary, :root[data-view="desktop"] #sim-reset{
+    cursor:pointer;
+  }
+  :root[data-view="desktop"] #sim-primary:hover, :root[data-view="desktop"] #sim-reset:hover{
+    opacity:.85;
+  }
 </style>
 </head>
 <body>
@@ -239,7 +280,10 @@
       <span class="word">SCAPE&deg;</span>
       <span class="sub">Wetter, Klima, Mensch</span>
     </div>
-    <div class="topbar-tag">Chaos&#8209;Labor</div>
+    <div class="topbar-right">
+      <div class="topbar-tag">Chaos&#8209;Labor</div>
+      <button id="view-toggle" type="button"></button>
+    </div>
   </header>
 
   <div class="poster">
@@ -488,13 +532,17 @@
     drawCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     pivotX = W * 0.5;
-    pivotY = H * 0.20;
+    pivotY = H * 0.14;
 
+    // Fill as much of the box as possible: bound scale by the horizontal
+    // half-width and the downward drop room. A very energetic swing can
+    // still loop above the pivot and clip against the box edge — the
+    // stage has overflow:hidden, so that's a harmless, expected trade-off
+    // for keeping the resting pendulum large on every screen size.
     var totalLen = PARAMS.N * SEG_LEN;
     scale = Math.min(
-      (W * 0.40) / totalLen,
-      (H * (1 - 0.20) * 0.85) / totalLen,
-      (H * 0.20 * 0.80) / totalLen
+      (W * 0.46) / totalLen,
+      (H - pivotY) * 0.92 / totalLen
     );
 
     trailCtx.fillStyle = '#f2e2c0';
@@ -803,17 +851,53 @@
   });
   resetBtn.addEventListener('click', resetSim);
 
+  // ============ VIEW MODE (phone / desktop) ============
+  var VIEW_STORAGE_KEY = 'scapeViewMode';
+  var MOBILE_QUERY = '(max-width: 699px)';
+  var viewToggleBtn = document.getElementById('view-toggle');
+
+  function setViewMode(m) {
+    document.documentElement.setAttribute('data-view', m);
+    viewToggleBtn.textContent = m === 'mobile' ? 'Desktop-Ansicht' : 'Mobile-Ansicht';
+    viewToggleBtn.setAttribute('aria-label', m === 'mobile' ? 'Zur Desktop-Ansicht wechseln' : 'Zur Mobile-Ansicht wechseln');
+  }
+
+  function relayout() {
+    layout();
+    if (mode === STATE_SETUP) renderSetup();
+  }
+
+  function setupViewToggle() {
+    setViewMode(document.documentElement.getAttribute('data-view') || 'mobile');
+
+    viewToggleBtn.addEventListener('click', function () {
+      var next = document.documentElement.getAttribute('data-view') === 'mobile' ? 'desktop' : 'mobile';
+      setViewMode(next);
+      try { localStorage.setItem(VIEW_STORAGE_KEY, next); } catch (e) {}
+      relayout();
+    });
+
+    var mql = window.matchMedia(MOBILE_QUERY);
+    function onViewportChange(e) {
+      var hasOverride = false;
+      try { hasOverride = localStorage.getItem(VIEW_STORAGE_KEY) !== null; } catch (err) {}
+      if (!hasOverride) {
+        setViewMode(e.matches ? 'mobile' : 'desktop');
+        relayout();
+      }
+    }
+    if (mql.addEventListener) mql.addEventListener('change', onViewportChange);
+  }
+
   // ============ INIT / RESIZE ============
   function init() {
+    setupViewToggle();
     layout();
     setEditor('A');
   }
-  window.addEventListener('resize', function () {
-    layout();
-    if (mode === STATE_SETUP) renderSetup();
-  });
+  window.addEventListener('resize', relayout);
   window.addEventListener('orientationchange', function () {
-    setTimeout(function () { layout(); if (mode === STATE_SETUP) renderSetup(); }, 200);
+    setTimeout(relayout, 200);
   });
 
   init();
