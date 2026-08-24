@@ -172,7 +172,7 @@
   .stage{
     position:relative;
     width:100%;
-    aspect-ratio:5/6;
+    aspect-ratio:3/2;
     touch-action:none;
     overflow:hidden;
   }
@@ -522,13 +522,15 @@
     drawCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     pivotX = W * 0.5;
-    pivotY = H * 0.14;
+    pivotY = H * 0.25;
 
     // Fill as much of the box as possible: bound scale by the horizontal
-    // half-width and the downward drop room. A very energetic swing can
-    // still loop above the pivot and clip against the box edge — the
-    // stage has overflow:hidden, so that's a harmless, expected trade-off
-    // for keeping the resting pendulum large on every screen size.
+    // half-width and the downward drop room, which are balanced by the
+    // stage's aspect-ratio + pivot position so neither leaves dead space.
+    // A very energetic swing can still loop above the pivot and clip
+    // against the box edge — the stage has overflow:hidden, so that's a
+    // harmless, expected trade-off for keeping the resting pendulum large
+    // on every screen size.
     var totalLen = PARAMS.N * SEG_LEN;
     scale = Math.min(
       (W * 0.46) / totalLen,
@@ -715,6 +717,12 @@
     modeDoubleBtn.classList.toggle('active', n === 2);
     modeTripleBtn.classList.toggle('active', n === 3);
     layout();
+    renderSetup();
+  }
+
+  function selectPendulumType(n) {
+    if (mode !== STATE_SETUP) resetSim();
+    setN(n);
   }
 
   function setEditor(who) {
@@ -729,9 +737,9 @@
     renderSetup();
   }
 
-  modeSimpleBtn.addEventListener('click', function () { if (mode === STATE_SETUP) setN(1); });
-  modeDoubleBtn.addEventListener('click', function () { if (mode === STATE_SETUP) setN(2); });
-  modeTripleBtn.addEventListener('click', function () { if (mode === STATE_SETUP) setN(3); });
+  modeSimpleBtn.addEventListener('click', function () { selectPendulumType(1); });
+  modeDoubleBtn.addEventListener('click', function () { selectPendulumType(2); });
+  modeTripleBtn.addEventListener('click', function () { selectPendulumType(3); });
   editorABtn.addEventListener('click', function () { if (mode === STATE_SETUP) setEditor('A'); });
   editorBBtn.addEventListener('click', function () { if (mode === STATE_SETUP) setEditor('B'); });
 
@@ -776,9 +784,6 @@
   }
 
   function setControlsEnabled(enabled) {
-    modeSimpleBtn.disabled = !enabled;
-    modeDoubleBtn.disabled = !enabled;
-    modeTripleBtn.disabled = !enabled;
     editorABtn.disabled = !enabled;
     editorBBtn.disabled = !enabled;
   }
