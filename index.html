@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>SCAPE&deg; &mdash; Chaos&#8209;Pendel</title>
+<meta name="description" content="Ein Doppelpendel im Browser: zwei fast identische Startpositionen, zwei v&ouml;llig verschiedene Wege &mdash; ein SCAPE&deg;-Projekt &uuml;ber das Chaos hinter der Wettervorhersage." />
+<meta name="theme-color" content="#f2e2c0" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#111111;
+    --paper:#ffffff;
+    --line:#111111;
+
+    /* SCAPE&deg; palette, sampled from the corporate identity guide */
+    --olive:#6b6b23;
+    --mustard:#d2a716;
+    --orange:#ef8f2c;
+    --rust:#c65a2a;
+    --red:#df2a1e;
+    --purple:#4a2e83;
+    --green:#00954f;
+    --cyan:#1093c4;
+    --navy:#28348f;
+
+    --cream:#f2e2c0;
+    --pastel-yellow:#f6ea79;
+    --bright-yellow:#ffe400;
+    --pastel-blue:#cfe6f6;
+    --pastel-lavender:#dcd6f2;
+    --mint:#4ab48a;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0; padding:0; min-height:100%;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Archivo', 'Helvetica Neue', Arial, sans-serif;
+    overscroll-behavior-y:none;
+  }
+  h1,h2,h3{font-family:inherit;}
+  img,svg{max-width:100%;}
+
+  .wrap{ max-width:600px; margin:0 auto; }
+
+  /* ============ WORDMARK / TOPBAR ============ */
+  .topbar{
+    display:flex; align-items:flex-end; justify-content:space-between;
+    padding:22px 20px 14px;
+  }
+  .wordmark .word{
+    display:block; font-size:26px; font-weight:800; letter-spacing:-.01em; line-height:1;
+  }
+  .wordmark .sub{
+    display:block; margin-top:4px; font-size:10px; font-weight:700;
+    letter-spacing:.14em; text-transform:uppercase;
+  }
+  .topbar-tag{
+    font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+    text-align:right; color:var(--ink); max-width:120px;
+  }
+
+  /* ============ POSTER HERO ============ */
+  .poster{
+    margin:0 20px 18px;
+    position:relative;
+    aspect-ratio:2.2/1;
+    overflow:hidden;
+  }
+  .poster-grid{
+    position:absolute; inset:0;
+    display:grid;
+    grid-template-columns:repeat(10,1fr);
+    grid-template-rows:1fr 1fr;
+  }
+  .q-orange{ grid-column:1/6; grid-row:1/2; background:var(--rust); }
+  .q-yellow{ grid-column:6/11; grid-row:1/2; background:var(--pastel-yellow); }
+  .q-cream{ grid-column:1/8; grid-row:2/3; background:var(--cream); }
+  .q-navy{ grid-column:8/11; grid-row:2/3; background:var(--navy); }
+
+  .arch{
+    position:absolute; right:5%; top:8%;
+    width:38%;
+    color:var(--mint);
+  }
+  .arch svg{ display:block; width:100%; height:auto; }
+
+  .poster-copy{
+    position:absolute; left:0; right:0; bottom:0;
+    padding:0 18px 16px;
+    max-width:74%;
+  }
+  .poster-title{
+    margin:0 0 6px; font-weight:900; text-transform:uppercase;
+    font-size:clamp(20px,7vw,30px); line-height:.98; letter-spacing:-.01em;
+  }
+  .poster-tagline{
+    margin:0; font-size:10px; font-weight:700; letter-spacing:.02em;
+    line-height:1.35; text-transform:uppercase;
+  }
+
+  /* ============ SCHEMATIC CARD ============ */
+  .photo-card{
+    margin:0 20px 26px;
+  }
+  .photo-card .schematic{
+    display:block; width:100%; height:auto;
+    border:2px solid var(--ink);
+    background:var(--cream);
+  }
+  .photo-cap{
+    margin-top:6px; font-size:10.5px; font-weight:600; letter-spacing:.03em; color:var(--ink);
+  }
+
+  main{ padding:0 20px 30px; }
+
+  /* ============ SECTION LABELS ============ */
+  .section-label{
+    font-size:11px; font-weight:800; letter-spacing:.12em; text-transform:uppercase;
+    margin:0 0 12px;
+  }
+
+  /* ============ EXPLAINER ============ */
+  .explainer{ margin-bottom:30px; }
+  .explainer h2{
+    margin:0 0 10px; font-size:19px; font-weight:800; letter-spacing:-.01em;
+  }
+  p.blurb{
+    margin:0 0 14px; font-size:14.5px; line-height:1.6; color:var(--ink);
+  }
+
+  /* ============ SIM STAGE ============ */
+  .stage-card{
+    margin:0 0 18px;
+    border:2px solid var(--ink);
+    background:var(--cream);
+    position:relative;
+  }
+  .stage{
+    position:relative;
+    width:100%;
+    aspect-ratio:5/6;
+    touch-action:none;
+    overflow:hidden;
+  }
+  .stage canvas{
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    display:block;
+  }
+  .stage-legend{
+    position:absolute; top:10px; left:10px; z-index:3;
+    display:flex; flex-direction:column; gap:5px;
+    font-size:9.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+    pointer-events:none;
+  }
+  .stage-legend span{ display:flex; align-items:center; gap:6px; }
+  .stage-legend i{
+    width:9px; height:9px; border:2px solid var(--ink); flex:none;
+  }
+  .stage-legend .dot-a{ background:var(--rust); }
+  .stage-legend .dot-b{ background:var(--navy); }
+
+  .stage-hint-badge{
+    position:absolute; top:10px; right:10px; z-index:3;
+    background:var(--paper); border:2px solid var(--ink);
+    font-size:9.5px; font-weight:700; letter-spacing:.03em; text-transform:uppercase;
+    padding:5px 8px;
+    pointer-events:none;
+    max-width:44%;
+    text-align:right;
+    line-height:1.3;
+  }
+
+  /* ============ READOUT ============ */
+  .readout{
+    display:flex; gap:14px 22px; flex-wrap:wrap;
+    margin-bottom:26px; padding:16px 0; border-top:2px solid var(--ink); border-bottom:2px solid var(--ink);
+  }
+  .readout div{ font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+  .readout b{ display:block; font-size:14px; font-weight:700; letter-spacing:0; margin-top:3px; text-transform:none; }
+
+  /* ============ CTA / CONTROLS ============ */
+  .cta-explain{ font-size:13px; }
+  .cta-explain b{ font-weight:800; }
+
+  .btn-row{ display:flex; gap:10px; }
+
+  #sim-start, #sim-reset{
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    width:100%;
+    font-family:inherit; font-weight:800; font-size:15px; text-transform:uppercase; letter-spacing:.02em;
+    padding:16px 20px; cursor:pointer;
+    border:2px solid var(--ink);
+  }
+  #sim-start{ background:var(--bright-yellow); color:var(--ink); flex:1.4; }
+  #sim-reset{ background:var(--paper); color:var(--ink); flex:1; }
+  #sim-start svg, #sim-reset svg{width:19px; height:19px; flex:none;}
+  #sim-start .sub, #sim-reset .sub{
+    display:block; font-size:10.5px; font-weight:600; text-transform:none; letter-spacing:0; opacity:.75; margin-top:1px;
+  }
+  #sim-start:disabled{opacity:.45; cursor:default;}
+
+  .hint{
+    margin-top:12px; font-size:11.5px; font-weight:500; color:var(--ink); text-align:center;
+  }
+  .build-tag{
+    margin-top:6px; font-size:9.5px; font-weight:600; color:var(--ink); text-align:center; opacity:.4;
+  }
+
+  /* ============ FOOTER ============ */
+  .brand-footer{
+    padding:26px 20px 34px; border-top:2px solid var(--ink);
+    font-size:11px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; line-height:1.6;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="topbar">
+    <div class="wordmark">
+      <span class="word">SCAPE&deg;</span>
+      <span class="sub">Wetter, Klima, Mensch</span>
+    </div>
+    <div class="topbar-tag">Chaos&#8209;Labor</div>
+  </header>
+
+  <div class="poster">
+    <div class="poster-grid">
+      <div class="q-orange"></div>
+      <div class="q-yellow"></div>
+      <div class="q-cream"></div>
+      <div class="q-navy"></div>
+    </div>
+    <div class="arch" aria-hidden="true">
+      <svg viewBox="0 0 300 220">
+        <path d="M60,20 A210,210 0 0 1 40,150" fill="none" stroke="currentColor" stroke-width="4" stroke-dasharray="1 12" stroke-linecap="round"/>
+        <line x1="60" y1="20" x2="215" y2="140" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="60" cy="20" r="6" fill="currentColor"/>
+        <line x1="215" y1="140" x2="120" y2="205" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="215" cy="140" r="9" fill="currentColor"/>
+        <circle cx="120" cy="205" r="12" fill="currentColor"/>
+      </svg>
+    </div>
+    <div class="poster-copy">
+      <h1 class="poster-title">Chaos&#8209;<br>Pendel</h1>
+      <p class="poster-tagline">Zwei fast identische Starts. Zwei v&ouml;llig verschiedene Wege.</p>
+    </div>
+  </div>
+
+  <figure class="photo-card">
+    <svg class="schematic" viewBox="0 0 400 240" role="img" aria-label="Schematische Darstellung eines Doppelpendels mit den Winkeln Theta 1 und Theta 2 sowie den Massen m1 und m2">
+      <rect x="0" y="0" width="400" height="240" fill="#f2e2c0"/>
+      <line x1="150" y1="26" x2="150" y2="70" stroke="#111111" stroke-width="1.5" stroke-dasharray="3 5"/>
+      <circle cx="150" cy="26" r="5" fill="#111111"/>
+      <path d="M150,26 L150,60 A34,34 0 0 1 178,78 Z" fill="none" stroke="#c65a2a" stroke-width="1.5" opacity=".7"/>
+      <text x="163" y="52" font-family="Archivo, sans-serif" font-size="13" font-weight="700" fill="#c65a2a">&theta;1</text>
+      <line x1="150" y1="26" x2="230" y2="118" stroke="#c65a2a" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="230" cy="118" r="12" fill="#c65a2a"/>
+      <text x="244" y="122" font-family="Archivo, sans-serif" font-size="15" font-weight="800" fill="#111111">m1</text>
+      <path d="M230,118 L230,150 A30,30 0 0 1 254,166 Z" fill="none" stroke="#28348f" stroke-width="1.5" opacity=".7"/>
+      <text x="240" y="146" font-family="Archivo, sans-serif" font-size="13" font-weight="700" fill="#28348f">&theta;2</text>
+      <line x1="230" y1="118" x2="175" y2="212" stroke="#28348f" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="175" cy="212" r="15" fill="#28348f"/>
+      <text x="192" y="217" font-family="Archivo, sans-serif" font-size="15" font-weight="800" fill="#111111">m2</text>
+      <path d="M30,210 C90,195 260,60 360,40" fill="none" stroke="#111111" stroke-width="1.5" stroke-dasharray="1 7" opacity=".5"/>
+    </svg>
+    <figcaption class="photo-cap">Zwei Arme, zwei Massen, zwei Freiheitsgrade &mdash; genug f&uuml;r Chaos &middot; SCAPE&deg;</figcaption>
+  </figure>
+
+  <main>
+    <div class="explainer">
+      <h2>Was ist ein Doppelpendel?</h2>
+      <p class="blurb">
+        H&auml;ngt man ein zweites Pendel an das Ende eines ersten, entsteht eines der einfachsten chaotischen Systeme der Physik. Ein einzelnes Pendel schwingt vorhersagbar hin und her. Zwei gekoppelte Pendel dagegen taumeln, &uuml;berschlagen sich und wechseln unregelm&auml;&szlig;ig zwischen ruhigem Schwingen und wilden Rotationen &mdash; obwohl die zugrunde liegenden Bewegungsgleichungen exakt bekannt sind und dieselbe Physik gilt wie bei jedem gew&ouml;hnlichen Pendel. Was hier fehlt, ist nicht die Formel, sondern die Vorhersagbarkeit.
+      </p>
+      <p class="blurb">
+        Der Grund daf&uuml;r hei&szlig;t <b>sensitive Abh&auml;ngigkeit von den Anfangsbedingungen</b> &mdash; besser bekannt als Schmetterlingseffekt. Startet man zwei identische Doppelpendel mit einer winzigen, kaum messbaren Differenz in der Startposition, verst&auml;rkt sich dieser Unterschied mit jeder Schwingung exponentiell. Nach wenigen Sekunden bewegen sich beide Pendel v&ouml;llig unabh&auml;ngig voneinander &mdash; obwohl sie fast am selben Punkt gestartet sind. Genau dasselbe Prinzip setzt der Vorhersagbarkeit von Wettermodellen eine harte Grenze: Auch der Zustand der Atmosph&auml;re l&auml;sst sich nie unendlich genau messen, und diese winzige Unsicherheit w&auml;chst mit der Zeit &mdash; ein Grund, warum Wettervorhersagen nach einigen Tagen unsicherer werden, ganz gleich wie leistungsf&auml;hig der Supercomputer ist.
+      </p>
+    </div>
+
+    <div class="section-label">Simulation</div>
+
+    <div class="stage-card">
+      <div class="stage" id="stage">
+        <canvas id="trail-canvas"></canvas>
+        <canvas id="draw-canvas"></canvas>
+        <div class="stage-legend" aria-hidden="true">
+          <span><i class="dot-a"></i>Original</span>
+          <span><i class="dot-b"></i>Zwilling (winzig versetzt)</span>
+        </div>
+        <div class="stage-hint-badge" id="stage-hint">Ziehe die Massen in Position</div>
+      </div>
+    </div>
+
+    <div class="readout" id="readout">
+      <div>Status<b id="ro-status">Bereit</b></div>
+      <div>Zeit<b id="ro-zeit">0,0&nbsp;s</b></div>
+      <div>Anfangsabweichung<b id="ro-eps">&mdash;</b></div>
+      <div>Abstand der Spitzen<b id="ro-dist">0&nbsp;cm</b></div>
+    </div>
+
+    <p class="blurb cta-explain">
+      <b>Ziehe m1 und m2</b> aus der Ruhelage in eine Startposition &mdash; je weiter, desto chaotischer. Tippe dann auf <b>Start</b>: ein zweiter, fast identischer Zwilling wird losgelassen, versetzt um weniger als ein Zehntelgrad. Beobachte, wie schnell sich die beiden Spuren trennen.
+    </p>
+    <div class="btn-row">
+      <button id="sim-start">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4l14 8-14 8V4z" fill="currentColor" stroke="none"/></svg>
+        <span>
+          <span id="sim-start-label">Start</span>
+          <span class="sub">Zwilling loslassen</span>
+        </span>
+      </button>
+      <button id="sim-reset">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg>
+        <span>
+          <span>Reset</span>
+        </span>
+      </button>
+    </div>
+    <div class="hint" id="hint">Die Spur verblasst mit der Zeit &mdash; alles l&auml;uft direkt in deinem Browser, ohne Server.</div>
+    <div class="build-tag">build v1</div>
+  </main>
+
+  <footer class="brand-footer">
+    Wetter, Klima, Wandel.<br>Wir erkl&auml;ren es. &mdash; SCAPE&deg;
+  </footer>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ============ PHYSICS ============
+  // Double pendulum in physical units (meters, seconds), theta measured
+  // from the downward vertical, positive clockwise:
+  //   x1 = l1*sin(t1),            y1 = l1*cos(t1)
+  //   x2 = x1 + l2*sin(t2),       y2 = y1 + l2*cos(t2)
+  var PARAMS = { m1: 1, m2: 1, l1: 1, l2: 1, g: 9.81 };
+
+  function deriv(s, p) {
+    var t1 = s[0], w1 = s[1], t2 = s[2], w2 = s[3];
+    var d = t1 - t2;
+    var den = (2 * p.m1 + p.m2 - p.m2 * Math.cos(2 * d));
+    var num1 = -p.g * (2 * p.m1 + p.m2) * Math.sin(t1)
+      - p.m2 * p.g * Math.sin(t1 - 2 * t2)
+      - 2 * Math.sin(d) * p.m2 * (w2 * w2 * p.l2 + w1 * w1 * p.l1 * Math.cos(d));
+    var a1 = num1 / (p.l1 * den);
+    var num2 = 2 * Math.sin(d) * (w1 * w1 * p.l1 * (p.m1 + p.m2)
+      + p.g * (p.m1 + p.m2) * Math.cos(t1)
+      + w2 * w2 * p.l2 * p.m2 * Math.cos(d));
+    var a2 = num2 / (p.l2 * den);
+    return [w1, a1, w2, a2];
+  }
+
+  function rk4(s, dt, p) {
+    var k1 = deriv(s, p);
+    var s2 = [s[0] + k1[0] * dt / 2, s[1] + k1[1] * dt / 2, s[2] + k1[2] * dt / 2, s[3] + k1[3] * dt / 2];
+    var k2 = deriv(s2, p);
+    var s3 = [s[0] + k2[0] * dt / 2, s[1] + k2[1] * dt / 2, s[2] + k2[2] * dt / 2, s[3] + k2[3] * dt / 2];
+    var k3 = deriv(s3, p);
+    var s4 = [s[0] + k3[0] * dt, s[1] + k3[1] * dt, s[2] + k3[2] * dt, s[3] + k3[3] * dt];
+    var k4 = deriv(s4, p);
+    return [
+      s[0] + (dt / 6) * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0]),
+      s[1] + (dt / 6) * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1]),
+      s[2] + (dt / 6) * (k1[2] + 2 * k2[2] + 2 * k3[2] + k4[2]),
+      s[3] + (dt / 6) * (k1[3] + 2 * k2[3] + 2 * k3[3] + k4[3])
+    ];
+  }
+
+  function bobPositions(s, p) {
+    var x1 = p.l1 * Math.sin(s[0]);
+    var y1 = p.l1 * Math.cos(s[0]);
+    var x2 = x1 + p.l2 * Math.sin(s[2]);
+    var y2 = y1 + p.l2 * Math.cos(s[2]);
+    return { x1: x1, y1: y1, x2: x2, y2: y2 };
+  }
+
+  // ============ DOM / CANVAS SETUP ============
+  var stage = document.getElementById('stage');
+  var trailCanvas = document.getElementById('trail-canvas');
+  var drawCanvas = document.getElementById('draw-canvas');
+  var trailCtx = trailCanvas.getContext('2d');
+  var drawCtx = drawCanvas.getContext('2d');
+
+  var startBtn = document.getElementById('sim-start');
+  var startLabel = document.getElementById('sim-start-label');
+  var resetBtn = document.getElementById('sim-reset');
+  var hintBadge = document.getElementById('stage-hint');
+  var roStatus = document.getElementById('ro-status');
+  var roZeit = document.getElementById('ro-zeit');
+  var roEps = document.getElementById('ro-eps');
+  var roDist = document.getElementById('ro-dist');
+
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  var W = 0, H = 0;         // CSS px
+  var pivotX = 0, pivotY = 0, scale = 1; // px per meter
+
+  function layout() {
+    var rect = stage.getBoundingClientRect();
+    W = rect.width;
+    H = rect.height;
+    [trailCanvas, drawCanvas].forEach(function (c) {
+      c.width = Math.round(W * dpr);
+      c.height = Math.round(H * dpr);
+    });
+    trailCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    drawCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    pivotX = W * 0.5;
+    pivotY = H * 0.12;
+    scale = H * 0.40;
+    trailCtx.fillStyle = '#f2e2c0';
+    trailCtx.fillRect(0, 0, W, H);
+  }
+
+  // ============ STATE ============
+  var STATE_SETUP = 'setup', STATE_RUN = 'run';
+  var mode = STATE_SETUP;
+
+  var orig = { theta1: 0, omega1: 0, theta2: 0, omega2: 0 };
+  var twin = null;
+  var epsDeg = 0;
+  var elapsed = 0;
+  var lastPrevOrig = null, lastPrevTwin = null;
+
+  var drag = null; // 'b1' | 'b2' | null
+
+  function toState(o) { return [o.theta1, o.omega1, o.theta2, o.omega2]; }
+  function fromState(s) { return { theta1: s[0], omega1: s[1], theta2: s[2], omega2: s[3] }; }
+
+  function toPx(m) { return { x: pivotX + m.x1 * scale, y: pivotY + m.y1 * scale, x2: pivotX + m.x2 * scale, y2: pivotY + m.y2 * scale }; }
+
+  // ============ DRAWING ============
+  function clearDraw() { drawCtx.clearRect(0, 0, W, H); }
+
+  function drawPivot() {
+    drawCtx.beginPath();
+    drawCtx.arc(pivotX, pivotY, 4, 0, Math.PI * 2);
+    drawCtx.fillStyle = '#111111';
+    drawCtx.fill();
+  }
+
+  function drawPendulum(o, color, bobR1, bobR2) {
+    var m = bobPositions(toState(o), PARAMS);
+    var p = toPx(m);
+    drawCtx.lineCap = 'round';
+    drawCtx.strokeStyle = '#111111';
+    drawCtx.lineWidth = 5;
+    drawCtx.beginPath();
+    drawCtx.moveTo(pivotX, pivotY);
+    drawCtx.lineTo(p.x, p.y);
+    drawCtx.lineTo(p.x2, p.y2);
+    drawCtx.stroke();
+    drawCtx.strokeStyle = color;
+    drawCtx.lineWidth = 3;
+    drawCtx.beginPath();
+    drawCtx.moveTo(pivotX, pivotY);
+    drawCtx.lineTo(p.x, p.y);
+    drawCtx.lineTo(p.x2, p.y2);
+    drawCtx.stroke();
+
+    drawCtx.fillStyle = color;
+    drawCtx.strokeStyle = '#111111';
+    drawCtx.lineWidth = 2;
+    drawCtx.beginPath();
+    drawCtx.arc(p.x, p.y, bobR1, 0, Math.PI * 2);
+    drawCtx.fill(); drawCtx.stroke();
+    drawCtx.beginPath();
+    drawCtx.arc(p.x2, p.y2, bobR2, 0, Math.PI * 2);
+    drawCtx.fill(); drawCtx.stroke();
+
+    return p;
+  }
+
+  function fadeTrail() {
+    trailCtx.fillStyle = 'rgba(242,226,192,0.045)';
+    trailCtx.fillRect(0, 0, W, H);
+  }
+
+  function trailSegment(prev, cur, color) {
+    if (!prev) return;
+    trailCtx.strokeStyle = color;
+    trailCtx.lineWidth = 2.4;
+    trailCtx.lineCap = 'round';
+    trailCtx.beginPath();
+    trailCtx.moveTo(prev.x2, prev.y2);
+    trailCtx.lineTo(cur.x2, cur.y2);
+    trailCtx.stroke();
+  }
+
+  // ============ RENDER (setup mode) ============
+  function renderSetup() {
+    clearDraw();
+    drawPivot();
+    drawPendulum(orig, '#c65a2a', 9, 12);
+  }
+
+  // ============ INTERACTION ============
+  function localPoint(ev) {
+    var rect = stage.getBoundingClientRect();
+    var t = (ev.touches && ev.touches[0]) || ev;
+    return { x: t.clientX - rect.left, y: t.clientY - rect.top };
+  }
+
+  function angleFrom(px, py, ox, oy) {
+    return Math.atan2(px - ox, py - oy);
+  }
+
+  function hitTest(pt) {
+    var m = bobPositions(toState(orig), PARAMS);
+    var p = toPx(m);
+    var d1 = Math.hypot(pt.x - p.x, pt.y - p.y);
+    var d2 = Math.hypot(pt.x - p.x2, pt.y - p.y2);
+    if (d2 < 32) return 'b2';
+    if (d1 < 32) return 'b1';
+    return null;
+  }
+
+  function onPointerDown(ev) {
+    if (mode !== STATE_SETUP) return;
+    var pt = localPoint(ev);
+    var hit = hitTest(pt);
+    if (!hit) return;
+    ev.preventDefault();
+    drag = hit;
+    hintBadge.style.display = 'none';
+    onPointerMove(ev);
+  }
+
+  function onPointerMove(ev) {
+    if (!drag || mode !== STATE_SETUP) return;
+    ev.preventDefault();
+    var pt = localPoint(ev);
+    if (drag === 'b1') {
+      orig.theta1 = angleFrom(pt.x, pt.y, pivotX, pivotY);
+      orig.omega1 = 0;
+    } else if (drag === 'b2') {
+      var m = bobPositions(toState(orig), PARAMS);
+      var p1 = toPx(m);
+      orig.theta2 = angleFrom(pt.x, pt.y, p1.x, p1.y);
+      orig.omega2 = 0;
+    }
+    renderSetup();
+  }
+
+  function onPointerUp() { drag = null; }
+
+  stage.addEventListener('mousedown', onPointerDown);
+  window.addEventListener('mousemove', onPointerMove);
+  window.addEventListener('mouseup', onPointerUp);
+  stage.addEventListener('touchstart', onPointerDown, { passive: false });
+  window.addEventListener('touchmove', onPointerMove, { passive: false });
+  window.addEventListener('touchend', onPointerUp);
+
+  // ============ SIM LOOP ============
+  var PHYS_DT = 1 / 1000;
+  var MAX_SUBSTEPS = 40;
+  var running = false;
+  var lastT = 0;
+
+  function fmt1(n) { return n.toFixed(1).replace('.', ','); }
+
+  function step(now) {
+    if (!running) return;
+    var frameDt = Math.min((now - lastT) / 1000, 0.05);
+    lastT = now;
+    var steps = Math.min(Math.round(frameDt / PHYS_DT), MAX_SUBSTEPS);
+
+    var so = toState(orig), st = toState(twin);
+    for (var i = 0; i < steps; i++) {
+      so = rk4(so, PHYS_DT, PARAMS);
+      st = rk4(st, PHYS_DT, PARAMS);
+    }
+    orig = fromState(so);
+    twin = fromState(st);
+    elapsed += steps * PHYS_DT;
+
+    var mo = bobPositions(so, PARAMS);
+    var mt = bobPositions(st, PARAMS);
+    var po = toPx(mo);
+    var pt = toPx(mt);
+
+    fadeTrail();
+    trailSegment(lastPrevOrig, po, 'rgba(198,90,42,0.9)');
+    trailSegment(lastPrevTwin, pt, 'rgba(40,52,143,0.85)');
+    lastPrevOrig = po;
+    lastPrevTwin = pt;
+
+    clearDraw();
+    drawPivot();
+    drawPendulum(twin, '#28348f', 8, 10);
+    drawPendulum(orig, '#c65a2a', 9, 12);
+
+    var distM = Math.hypot(mo.x2 - mt.x2, mo.y2 - mt.y2);
+    roZeit.textContent = fmt1(elapsed) + ' s';
+    roDist.textContent = fmt1(distM * 100) + ' cm';
+
+    requestAnimationFrame(step);
+  }
+
+  function startSim() {
+    if (mode === STATE_RUN) return;
+    mode = STATE_RUN;
+    var eps = 0.0005 + Math.random() * 0.0006; // rad, well under a tenth of a degree
+    twin = {
+      theta1: orig.theta1 + eps,
+      omega1: 0,
+      theta2: orig.theta2 + eps,
+      omega2: 0
+    };
+    epsDeg = Math.hypot(twin.theta1 - orig.theta1, twin.theta2 - orig.theta2) * 180 / Math.PI;
+    roEps.textContent = epsDeg.toFixed(3).replace('.', ',') + ' °';
+    elapsed = 0;
+    lastPrevOrig = null;
+    lastPrevTwin = null;
+    roStatus.textContent = 'Läuft';
+    roZeit.textContent = '0,0 s';
+    roDist.textContent = '0 cm';
+    startBtn.disabled = true;
+    startLabel.textContent = 'Läuft…';
+    hintBadge.style.display = 'none';
+    running = true;
+    lastT = performance.now();
+    requestAnimationFrame(step);
+  }
+
+  function resetSim() {
+    running = false;
+    mode = STATE_SETUP;
+    orig = { theta1: 0, omega1: 0, theta2: 0, omega2: 0 };
+    twin = null;
+    elapsed = 0;
+    lastPrevOrig = null;
+    lastPrevTwin = null;
+    startBtn.disabled = false;
+    startLabel.textContent = 'Start';
+    roStatus.textContent = 'Bereit';
+    roZeit.textContent = '0,0 s';
+    roEps.textContent = '—';
+    roDist.textContent = '0 cm';
+    hintBadge.style.display = '';
+    hintBadge.textContent = 'Ziehe die Massen in Position';
+    trailCtx.fillStyle = '#f2e2c0';
+    trailCtx.fillRect(0, 0, W, H);
+    renderSetup();
+  }
+
+  startBtn.addEventListener('click', startSim);
+  resetBtn.addEventListener('click', resetSim);
+
+  // ============ INIT / RESIZE ============
+  function init() {
+    layout();
+    renderSetup();
+  }
+  window.addEventListener('resize', function () {
+    layout();
+    if (mode === STATE_SETUP) renderSetup();
+  });
+  window.addEventListener('orientationchange', function () {
+    setTimeout(function () { layout(); if (mode === STATE_SETUP) renderSetup(); }, 200);
+  });
+
+  init();
+})();
+</script>
+
+</body>
+</html>
