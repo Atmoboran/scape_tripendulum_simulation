@@ -172,7 +172,7 @@
   .stage{
     position:relative;
     width:100%;
-    aspect-ratio:3/2;
+    aspect-ratio:1/1;
     touch-action:none;
     overflow:hidden;
   }
@@ -363,6 +363,9 @@
       <p class="blurb">
         Der Grund daf&uuml;r hei&szlig;t <b>sensitive Abh&auml;ngigkeit von den Anfangsbedingungen</b> &mdash; besser bekannt als Schmetterlingseffekt. Startet man zwei fast identische Pendel mit einer winzigen, kaum sichtbaren Differenz in der Startposition, verst&auml;rkt sich dieser Unterschied mit jeder Schwingung exponentiell. Nach wenigen Sekunden bewegen sich beide Pendel v&ouml;llig unabh&auml;ngig voneinander &mdash; obwohl sie fast am selben Punkt gestartet sind. Genau dasselbe Prinzip setzt der Vorhersagbarkeit von Wettermodellen eine harte Grenze: Auch der Zustand der Atmosph&auml;re l&auml;sst sich nie unendlich genau messen, und diese winzige Unsicherheit w&auml;chst mit der Zeit &mdash; ein Grund, warum Wettervorhersagen nach einigen Tagen unsicherer werden, ganz gleich wie leistungsf&auml;hig der Supercomputer ist.
       </p>
+      <p class="blurb">
+        Entscheidend dabei ist die Energie im System: Lenkst du beide Pendel nur wenig aus der Ruhelage aus, bleiben sich Rot und Blau erstaunlich &auml;hnlich. Bei kleinen Auslenkungen verh&auml;lt sich ein Mehrfachpendel n&auml;herungsweise wie ein einfaches, lineares System &mdash; kleine Unterschiede bleiben klein, statt sich aufzuschaukeln. Erst wenn genug Energie im System steckt, damit sich die Massen &uuml;berschlagen k&ouml;nnen, wird die Bewegung nichtlinear und damit chaotisch. Auch daf&uuml;r gibt es eine Entsprechung im Wetter: Bei ruhigen, stabilen Lagen &mdash; etwa einem ausgedehnten Hochdruckgebiet &mdash; bleiben Vorhersagen tendenziell l&auml;nger zuverl&auml;ssig, weil sich kleine Messfehler kaum verst&auml;rken. Bei energiereichen, turbulenten Situationen wie St&uuml;rmen oder stark wechselhaftem Wetter dagegen w&auml;chst dieselbe kleine Unsicherheit viel schneller an &mdash; die Vorhersage wird schon nach k&uuml;rzerer Zeit unsicher.
+      </p>
     </div>
     <div class="build-tag">build v2</div>
   </main>
@@ -521,21 +524,14 @@
     trailCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
     drawCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
+    // Pivot dead-center: a full loop reaches the same distance in every
+    // direction, so a centered pivot in a square box is the only way to
+    // fit that reach without clipping on some sides but not others.
     pivotX = W * 0.5;
-    pivotY = H * 0.25;
+    pivotY = H * 0.5;
 
-    // Fill as much of the box as possible: bound scale by the horizontal
-    // half-width and the downward drop room, which are balanced by the
-    // stage's aspect-ratio + pivot position so neither leaves dead space.
-    // A very energetic swing can still loop above the pivot and clip
-    // against the box edge — the stage has overflow:hidden, so that's a
-    // harmless, expected trade-off for keeping the resting pendulum large
-    // on every screen size.
     var totalLen = PARAMS.N * SEG_LEN;
-    scale = Math.min(
-      (W * 0.46) / totalLen,
-      (H - pivotY) * 0.92 / totalLen
-    );
+    scale = (Math.min(W, H) * 0.46) / totalLen;
 
     trailCtx.fillStyle = '#f2e2c0';
     trailCtx.fillRect(0, 0, W, H);
@@ -666,7 +662,7 @@
       hintBadge.style.display = '';
       hintBadge.classList.add('attn');
       editorBBtn.classList.add('attn');
-    }, 3000);
+    }, 1500);
   }
 
   function onPointerDown(ev) {
