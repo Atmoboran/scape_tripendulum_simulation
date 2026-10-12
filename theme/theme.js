@@ -9,8 +9,8 @@ window.THEME = {
       '<span class="logo-word">SCAPE°</span>' +
       '<span class="logo-sub" aria-hidden="true"><span>Wetter</span><span>Klima</span><span>Mensch</span></span>',
     logoLabel: 'SCAPE° – Wetter Klima Mensch',
-    claim: 'Wetter, Klima, Wandel. Wir erklären es.',
-    contactHtml: 'SCAPE°<br>Frankfurter Straße 39<br>63065 Offenbach am Main<br>Instagram: @scape_offenbach<br>scape@offenbach.de',
+    // The one line in every footer.
+    line: 'SCAPE° – Wetter. Klima. Mensch.',
     titleSuffix: ' – SCAPE°',
     themeColor: '#F2E4BA',
     // Short mark S° for the browser tab.
@@ -32,14 +32,27 @@ window.THEME = {
     greenStrong: '#00983A', green: '#62BA91', greenPale: '#B0D8C0', mint: '#CFE6CE', paleGreen: '#D0E8DC',
     cyan: '#0097BE', cyan2: '#44ABCC', cyan3: '#80C0DA', petrol: '#1F6C8E', teal: '#007B73', grey: '#AEC4C2',
     navy: '#28348B', blue: '#0253A0', blue2: '#3274BA', bluePale: '#98B8DD', ice: '#D4EDF8'
+  },
+
+  // Meaningful data colours, the same in every app (style guide 4.3).
+  data: {
+    cold: '#3274BA', neutral: '#D9D6CF', warm: '#E41513',   // temperature scale
+    low: '#E41513', high: '#3274BA',                        // T (Tief) red, H (Hoch) blue
+    pairA: '#E41513', pairB: '#28348B'                      // two things compared: red vs blue
   }
 };
 
-// ---- Chaos-Pendel: colours on the canvas (same values as in theme.css) ----
-// The UI calls the pendulums "Rot" and "Blau" – keep a red and a blue.
+// Colour on the CD temperature scale: t = 0 (cold) … 0.5 (neutral) … 1 (warm).
+THEME.tempColor = function (t) {
+  const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+  const [a, b] = t < 0.5 ? [hex(THEME.data.cold), hex(THEME.data.neutral)] : [hex(THEME.data.neutral), hex(THEME.data.warm)];
+  const f = Math.max(0, Math.min(1, t < 0.5 ? t * 2 : (t - 0.5) * 2));
+  return 'rgb(' + a.map((v, i) => Math.round(v + (b[i] - v) * f)).join(',') + ')';
+};
+
+// ---- Chaos-Pendel: canvas colours (match theme.css) ----
+// The two pendulums use THEME.data.pairA / pairB (red vs blue).
 THEME.pendulum = {
-  a: '#E41513',        // Rot
-  b: '#28348B',        // Blau
   stage: '#F2E4BA',    // stage background, trails fade into it
   ink: '#000000'       // rods, outlines, pivot
 };

@@ -1,27 +1,55 @@
-# SCAPE° — Chaos-Pendel
+# SCAPE° — Chaos-Pendel ("Wetter ist Chaos")
 
-A browser-only double- or triple-pendulum simulation illustrating sensitive
+A browser-only single, double or triple pendulum illustrating sensitive
 dependence on initial conditions (the "butterfly effect") — the same
 phenomenon that limits how far ahead weather can be forecast.
 
-Choose double or triple pendulum, then position two pendulums by hand — Rot
-(red) and Blau (blue), one at a time — anywhere from near-identical to
-completely different. Press **Start** to release both. Trails fade over
-time, showing how quickly the two paths separate. **Stopp** pauses the
-simulation, **Weiter** resumes it, **Reset** returns to setup.
+Visitors place a red and a blue pendulum by hand — near-identical or
+completely different — press **Start** and watch the paths separate. Trails
+fade over time. Two optional tasks (start almost identically and watch them
+separate; start with little swing and see them stay together) unlock the
+"Merke" box with the key insight. Longer explanations sit in collapsible
+topics below.
 
-- Pure client-side canvas + JavaScript — no build step, no server, no
-  external dependencies (no web fonts are loaded from the internet).
-- Physics: general N-fold chain-pendulum equations of motion (mass-matrix
-  form), solved each substep via Gaussian elimination and integrated with
-  RK4 at a fixed physical timestep, decoupled from the render frame rate.
-- Design: SCAPE° corporate design, kept apart from the app in `theme/`
-  (`theme.css`: font, palette, roles, wordmark; `theme.js`: brand texts and
-  the canvas colours). To ship the exhibit in another design, edit `theme/`
-  only — see `theme/README.md`. Founders Grotesk is used when installed or
-  placed in `theme/fonts/`, otherwise Helvetica Neue / Inter / Arial.
-- Layout: on a phone everything stacks (settings, pendulum, buttons); in the
-  desktop view the pendulum sits on the left, as large as the screen allows,
-  and all settings and buttons move to the right.
+## Run
 
-Open `index.html` directly, or serve the folder with any static file server.
+Open `index.html` (double-click works, no build, no server, works offline),
+or serve the folder with any static file server / GitHub Pages.
+
+URL switches for staff: `?kiosk` (exhibit mode: back to the start after
+3 minutes without touch).
+
+## Files
+
+```
+index.html          structure only (data-t placeholders for every text)
+css/kit.css         shared SCAPE° components (same in every app)
+css/app.css         layout of this app
+js/view.js          phone/desktop layout switch (loaded in <head>)
+js/texts.js         fills the texts from content/
+js/brand.js         fills logo and footer line from the theme
+js/kit.js           fullscreen button, hint badge, tasks/Merke, kiosk mode
+js/physics.js       pendulum physics (pure functions)
+js/app.js           stage, interaction, loop
+content/texts.de.js every visible text (edit or translate here)
+theme/              the design: font, palette, logo, colours (see theme/README.md)
+```
+
+## Physics
+
+General N-fold chain-pendulum equations of motion (mass-matrix form), solved
+each substep via Gaussian elimination and integrated with RK4 at a fixed
+physical time step, decoupled from the frame rate. No friction.
+
+## Layout
+
+Phone: intro and settings, the square stage, readout, Start/Reset, tasks.
+Desktop (automatic from 1000 px, or via the "Desktop-/Handy-Ansicht" toggle,
+remembered for this app only): the stage on the left, sized to the screen;
+intro, settings, buttons and tasks on the right.
+
+## Adapting
+
+Design: `theme/` only. Texts: `content/texts.de.js` only (lines marked
+`LOCAL` refer to SCAPE° or its region). Founders Grotesk is used when
+installed, otherwise the system fallback.
