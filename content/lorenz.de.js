@@ -67,6 +67,22 @@ window.TEXTS.lorenz = {
         '<p class="formula">dx/dt = 10 · (y − x)<br>dy/dt = x · (28 − z) − y<br>dz/dt = x · y − 8/3 · z</p>' +
         '<p>Der Punkt (x, y, z) zeichnet im Bild seine Bahn. Er kreist um zwei Zentren – die beiden „Flügel“ – und springt unregelmäßig zwischen ihnen hin und her. Er wiederholt sich nie genau und verlässt doch nie diese Form. So eine Form heißt <b>seltsamer Attraktor</b>.</p>'
     },
+    shape: {
+      title: 'Was zeigt der Schmetterling?',
+      body: '<p>Der Schmetterling ist zunächst eine geometrische Darstellung des Systems. Er zeigt, dass sich die Entwicklung des Systems bevorzugt in zwei Bereichen abspielt, zwischen denen es immer wieder wechselt. Seine Bahn ist weder eine geschlossene Schleife noch eine völlig ungeordnete Bewegung: Sie ist <b>strukturiert, aber nicht periodisch</b>.</p>' +
+        '<p>Daraus ergibt sich eine wichtige Erkenntnis. Ein System kann gleichzeitig drei Eigenschaften besitzen:</p>' +
+        '<ul><li>Es folgt festen Regeln.</li><li>Es erzeugt komplizierte, nicht periodische Bewegungen.</li><li>Seine langfristige Entwicklung ist empfindlich gegenüber kleinen Anfangsunterschieden.</li></ul>' +
+        '<p>Man kann die gesamte Idee auf einen einzigen Gedanken reduzieren:</p>' +
+        '<p class="formula"><b>Vorhersagbarkeit und Gesetzmäßigkeit sind nicht dasselbe.</b></p>' +
+        '<p>Ein System kann vollständig durch mathematische Regeln beschrieben sein und trotzdem langfristig schwer vorherzusagen bleiben. Das Lorenz-Modell ist dafür ein besonders anschauliches Beispiel: Die drei Variablen x, y und z entwickeln sich nach festen Gleichungen. Dennoch entsteht eine Bewegung, deren konkreter Verlauf empfindlich von den Anfangsbedingungen abhängt.</p>' +
+        '<p>Das System ist also nicht regellos. Es ist vielmehr ein Beispiel dafür, wie aus einfachen Regeln komplexes Verhalten entstehen kann.</p>'
+    },
+    variables: {
+      title: 'Was bedeuten x, y und z – ist das die Temperatur?',
+      body: '<ul><li><b>x</b> beschreibt die idealisierte Luftzirkulation.</li><li><b>y</b> beschreibt einen Anteil der Temperaturverteilung, der mit der Zirkulation gekoppelt ist.</li><li><b>z</b> beschreibt einen weiteren Anteil der Temperaturstruktur.</li></ul>' +
+        '<p>Keine der drei Variablen ist für sich genommen einfach die Temperatur der Luft. Erst ihr Zusammenspiel bildet die Dynamik des Modells ab.</p>' +
+        '<p>Das ist auch der Grund, weshalb der Lorenz-Attraktor nicht einfach eine Grafik der Temperaturentwicklung ist. Er zeigt die gesamte Entwicklung des modellierten Systems in einem dreidimensionalen <b>Zustandsraum</b>: Jeder Punkt im Bild ist ein vollständiger Zustand des Modellwetters.</p>'
+    },
     butterfly: {
       title: 'Woher kommt der Name Schmetterlingseffekt?',
       body: '<p>Lorenz wollte eine Rechnung wiederholen und tippte die Zwischenwerte vom Ausdruck ab – gerundet auf drei statt sechs Stellen, etwa 0,506 statt 0,506127. Die neue Rechnung lief erst gleich, dann immer weiter auseinander, bis sie ein völlig anderes Wetter zeigte. Der winzige Rundungsfehler war gewachsen, genau wie bei Rot und Blau.</p>' +
