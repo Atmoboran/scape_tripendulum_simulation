@@ -85,16 +85,26 @@
         <button type="button" class="info" aria-controls="controls-help" data-t-aria="controls.infoAria"></button>
       </div>
 
+      <!-- The bubble in map B: warm or cold, and how strong -- in steps of
+           ten, so "100 times weaker" is two clicks to the left. -->
+      <div class="strength">
+        <div class="strength-head">
+          <label for="delta-range" data-t="karte.delta.label"></label>
+          <output id="delta-out" for="delta-range"></output>
+        </div>
+        <div class="strength-row">
+          <div class="sign-pick" role="group" data-t-aria="karte.delta.signAria">
+            <button type="button" class="pick sign-warm active" data-sign="1" aria-pressed="true"><span data-t="karte.delta.warm"></span></button>
+            <button type="button" class="pick sign-cold" data-sign="-1" aria-pressed="false"><span data-t="karte.delta.cold"></span></button>
+          </div>
+          <div class="slider">
+            <input type="range" id="delta-range" min="0" max="7" step="1" value="6">
+            <div class="strength-scale" aria-hidden="true"><span data-t="karte.delta.scaleLow"></span><span data-t="karte.delta.scaleHigh"></span></div>
+          </div>
+        </div>
+      </div>
+
       <div class="ctl-row">
-        <label class="select-field">
-          <span class="select-label" data-t="karte.delta.label"></span>
-          <select id="delta-select">
-            <option value="0.5" data-t="karte.delta.big" selected></option>
-            <option value="0.005" data-t="karte.delta.small"></option>
-            <option value="0.00005" data-t="karte.delta.tiny"></option>
-            <option value="0" data-t="karte.delta.none"></option>
-          </select>
-        </label>
         <label class="select-field narrow">
           <span class="select-label" data-t="lab.speed"></span>
           <select id="speed-select">

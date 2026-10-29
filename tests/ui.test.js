@@ -31,7 +31,7 @@ for (const page of ['karte.html']) {
     assert.equal(await time(), 0);
     assert.equal(await diff(), d0, 'restart gives the same start difference');
     // control: no perturbation → no difference, ever
-    await p.selectOption('#delta-select', '0');
+    await p.locator('#delta-range').fill('0');
     assert.equal(await p.locator('#ro-diff').textContent(), '0 %');
     await p.click('#sim-primary'); await p.waitForTimeout(1500);
     assert.equal(await p.locator('#ro-diff').textContent(), '0 %');

@@ -27,26 +27,28 @@ window.TEXTS.karte = {
   },
   northMark: 'N ↑',
   km: '1000 km',
-  bubble: d => '+' + d + ' °C',
+  bubble: d => d,
   legendTemp: 'Temperatur',
   legendTempEnds: ['−20 °C', '+20 °C'],
   legendDiff: 'Unterschied',
   legendDiffEnds: ['0,001 °C', '10 °C'],
 
   delta: {
-    label: 'Warmer Fleck in B',
-    big: '+0,5 °C',
-    small: '+0,005 °C (100× kleiner)',
-    tiny: '+0,000 05 °C (100× kleiner)',
+    label: 'Fleck in Karte B',
+    signAria: 'Warmer oder kalter Fleck',
+    warm: 'warm',
+    cold: 'kalt',
     none: 'kein Fleck (Kontrolle)',
-    values: { '0.5': '0,5', '0.005': '0,005', '0.00005': '0,000 05' }
+    scaleLow: 'kein · winzig',
+    scaleHigh: 'stark',
+    value: (sign, v) => (sign > 0 ? '+' : '−') + v + ' °C'
   },
 
   diffNote: '<p><b>Unterschied</b> vergleicht die Temperatur der beiden Karten an allen Orten: die mittlere Abweichung, geteilt durch die Abweichung zwischen zwei Karten von völlig zufälligen Tagen. <b>100 %</b> heißt: Die Wetterlagen haben nichts mehr miteinander zu tun.</p>' +
     '<p>Die obere Grafik zeigt diesen Unterschied über die Tage, <b>logarithmisch</b> – jede Linie 100-mal größer als die darunter. Steigt die Kurve gerade an, verdoppelt sich der Unterschied in festen Abständen; die gestrichelte orange Linie schätzt diese Verdopplungszeit. Grau: der Lauf davor.</p>' +
     '<p>Die untere Grafik ist die <b>Wetterstation</b>: die Temperatur an einem Ort, den du in die Karte tippst – schwarz in Karte A, orange in Karte B. Erst liegen die Kurven übereinander, dann trennen sie sich.</p>',
 
-  controlsNote: '<p>Zwei Karten, <b>A</b> und <b>B</b>, starten mit genau derselben Wetterlage. Nur in B ist ein <b>warmer Fleck</b> so groß wie Deutschland, ein winziges bisschen wärmer – ziehe den gestrichelten Kreis, um ihn zu verschieben. Beide werden mit denselben Gleichungen und demselben Verfahren gerechnet. Die dritte Karte zeigt, <b>wo</b> sich A und B unterscheiden.</p>' +
+  controlsNote: '<p>Zwei Karten, <b>A</b> und <b>B</b>, starten mit genau derselben Wetterlage. Nur in B ist ein <b>Fleck</b> so groß wie Deutschland ein winziges bisschen wärmer oder kälter – ziehe den gestrichelten Kreis, um ihn zu verschieben. Unter dem Diagramm stellst du ein, ob er <b>warm</b> oder <b>kalt</b> ist und wie stark: Jede Stufe des Reglers ist 10-mal stärker als die vorige, ganz links ist gar kein Fleck (Kontrolle: dann bleiben A und B genau gleich). Beide werden mit denselben Gleichungen und demselben Verfahren gerechnet. Die dritte Karte zeigt, <b>wo</b> sich A und B unterscheiden.</p>' +
     '<p><b>Farben</b>: Temperatur in etwa 5 km Höhe, warm im Süden, kalt im Norden. <b>Linien</b>: die Strömung in dieser Höhe – der Wind weht an den Linien entlang, umso stärker, je dichter sie liegen, wie bei Isobaren auf der Wetterkarte.</p>' +
     '<p><b>Tippen</b> in eine Karte setzt eine <b>Wetterstation</b>: Sie misst in beiden Karten die Temperatur an diesem Ort und zeichnet sie unten auf.</p>' +
     '<p><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4l14 8-14 8V4z" fill="currentColor" stroke="none"/></svg></span> startet, dann Pause und Weiter. <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg></span> startet beide noch einmal vom <b>selben</b> Anfang. <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16"/><circle cx="9" cy="9" r="1.5" fill="currentColor" stroke="none"/><circle cx="15" cy="15" r="1.5" fill="currentColor" stroke="none"/></svg></span> nimmt eine andere Wetterlage. Oben links: <b>Alle</b> Karten oder eine einzelne groß.</p>',
@@ -58,10 +60,10 @@ window.TEXTS.karte = {
     doneApart: d => 'Etwa ' + d + ' Tage. Dieses Modell ist viel einfacher als die Atmosphäre: Es kennt keine Gewitter, keine Wolken, keine Berge. In echten Wettermodellen wachsen Fehler auch durch solche kleinen, schnellen Vorgänge – deshalb liegt die Grenze der Vorhersage dort bei etwa zwei Wochen.',
     station: 'Setz eine Wetterstation in die Karte und starte. Nach wie vielen Tagen zeigen A und B an deiner Station mehr als 5 °C Unterschied?',
     doneStation: d => 'Nach ' + d + ' Tagen. Am Anfang zeigen beide Stationen dasselbe Wetter – dann geht es auseinander. Für einen einzelnen Ort geht eine Vorhersage oft schon daneben, wenn die große Wetterlage noch ähnlich aussieht.',
-    smaller: 'Mach den warmen Fleck 100-mal schwächer und starte noch einmal. Bleiben die Karten jetzt 100-mal länger gleich?',
+    smaller: 'Schieb den Regler für den Fleck zwei Stufen nach links – 100-mal schwächer – und starte noch einmal. Bleiben die Karten jetzt 100-mal länger gleich?',
     times: list => 'Über 50 % nach: ' + list,
-    timeItem: (delta, days) => days + ' Tagen (bei +' + delta + ' °C)',
-    doneSmaller: (a, b) => 'Nein – nur etwa ' + a + ' statt ' + b + ' Tage. 100-mal genauer messen bringt nur einige Tage mehr. Darum verbessern Wetterdienste nicht nur die Messungen, sondern rechnen viele leicht verschiedene Läufe und geben Wahrscheinlichkeiten an.'
+    timeItem: (delta, days) => days + ' Tagen (bei ' + delta + ')',
+    doneSmaller: (a, b, f) => 'Nein – nur etwa ' + a + ' statt ' + b + ' Tage. ' + f + '-mal genauer messen bringt nur einige Tage mehr. Darum verbessern Wetterdienste nicht nur die Messungen, sondern rechnen viele leicht verschiedene Läufe und geben Wahrscheinlichkeiten an.'
   },
 
   topics: {

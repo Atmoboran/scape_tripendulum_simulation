@@ -110,6 +110,12 @@ die App sagt das ausdrücklich.
    normiert; seither ist λ₁ bei halbem Zeitschritt unverändert.
 5. **Kontrollexperiment** zunächst falsch angesetzt (Start im turbulenten
    Zustand); ersetzt durch Start aus Rauschen.
-6. **Gebiet 2 : 1** (für drei Karten untereinander auf dem Handy): Ein
+6. **Stärke des Flecks frei wählbar** (Regler 0,000 01 … 5 °C, warm oder
+   kalt): bei drei Wetterlagen je 60 Tage mit ±0,000 01 bis +40 °C und −10 °C
+   gerechnet – immer stabil, größter Wind 59–70 m/s, Stabilitätszahl ≤ 0,53.
+   Der 500 km breite, weiche Fleck erzeugt selbst bei großen Werten nur mäßigen
+   Wind. Die Obergrenze 5 °C ist inhaltlich gewählt (darüber ist es kein
+   „winziger“ Unterschied mehr), nicht numerisch.
+7. **Gebiet 2 : 1** (für drei Karten untereinander auf dem Handy): Ein
    schmales Gebiet 8000 × 4000 km wurde instabil; gewählt wurde
    16 000 × 8000 km auf 64 × 32 Punkten und neu validiert (Tabelle oben).

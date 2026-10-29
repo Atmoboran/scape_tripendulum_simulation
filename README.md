@@ -25,7 +25,8 @@ experts: once apart, pause while the two pass within 2 of each other
 
 **Chapter 3 (`karte.html`)** — a two-layer quasi-geostrophic model of the
 mid-latitude atmosphere (64 × 32 points, 16 000 × 8000 km): map A, map B
-(with a small warm bubble the visitor drags into place) and their
+(with a small warm or cold bubble the visitor drags into place and sets
+from 0.000 01 to 5 °C in steps of ten, or off as a control) and their
 difference, all three at once by default; temperature in colour,
 upper-level flow as lines. A tap sets a weather station that records the
 temperature there in A and B. Errors double in ≈ 3 days.

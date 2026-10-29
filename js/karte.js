@@ -20,7 +20,9 @@
   const stage = document.getElementById('stage');
   const canvas = document.getElementById('draw-canvas');
   const ctx = canvas.getContext('2d');
-  const deltaSelect = document.getElementById('delta-select');
+  const deltaRange = document.getElementById('delta-range');
+  const deltaOut = document.getElementById('delta-out');
+  const signBtns = [...document.querySelectorAll('.sign-pick .pick')];
   const viewBtns = [...document.querySelectorAll('.view-pick')];
   const stationCanvas = document.getElementById('station-chart');
   const stationCtx = stationCanvas.getContext('2d');
@@ -50,7 +52,14 @@
   }
 
   // ============ MODEL ADAPTER ============
-  let A, B, delta = +deltaSelect.value;
+  // strength of the bubble: off, then steps of ten up to 5 °C. Up to that
+  // the model stays well inside its stability limit (checked to 40 °C);
+  // above a few degrees it would no longer be a "tiny" difference.
+  const LEVELS = [0, 1e-5, 1e-4, 1e-3, 1e-2, 0.1, 1, 5];
+  let sign = 1;
+  const strength = () => LEVELS[+deltaRange.value];
+  const fmtDelta = (v) => (v === 0 ? t('karte.delta.none') : t('karte.delta.value', Math.sign(v), Math.abs(v).toLocaleString('de-DE', { maximumFractionDigits: 5 })));
+  let A, B, delta = sign * strength();
   let bubble = { x: 0.5 * P.L, y: 0.45 * P.W };
   let station = null;                 // { x, y } in metres
   let rec = { t: [], a: [], b: [] };  // station recording
@@ -65,7 +74,7 @@
       const [q1, q2] = startState();
       A = new QG.Model().setQ(q1, q2);
       B = A.clone();
-      if (delta > 0) B.perturbTemperature(bubble.x, bubble.y, RADIUS, delta / QG.KELVIN);
+      if (delta !== 0) B.perturbTemperature(bubble.x, bubble.y, RADIUS, delta / QG.KELVIN);
       cache.t = -1;
       passed = false; stationPassed = false;
       rec = { t: [], a: [], b: [] };
@@ -242,12 +251,12 @@
     ctx.textAlign = 'right';
     ctx.fillText(t('karte.northMark'), m.x0 + m.w, m.y0 - 3);
     // the bubble before the start (in B and the difference)
-    if (mode === 'setup' && m.kind !== 'a' && delta > 0) {
+    if (mode === 'setup' && m.kind !== 'a' && delta !== 0) {
       const [bx, by] = toScreen(m, bubble.x, bubble.y), r = RADIUS / P.L * m.w;
       ctx.strokeStyle = INK; ctx.setLineDash([4, 4]); ctx.lineWidth = 2;
       ctx.beginPath(); ctx.arc(bx, by, Math.max(r, 8), 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
       ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-      ctx.fillText(t('karte.bubble', t('karte.delta.values')[String(delta)] || String(delta)), bx, by - Math.max(r, 8) - 3);
+      ctx.fillText(t('karte.bubble', fmtDelta(delta)), bx, by - Math.max(r, 8) - 3);
     }
     // the weather station: a pin, with the reading in A and B
     if (station) {
@@ -347,6 +356,7 @@
     g.setTransform(sdpr, 0, 0, sdpr, 0, 0);
     g.clearRect(0, 0, w, h);
     stationEmpty.hidden = !!station;
+    if (!station) return;          // only the hint until a station is set
     const padL = 72, padR = 8, padT = 6, padB = 20;
     g.font = '500 10px ' + FONT; g.fillStyle = INK;
     // axes
@@ -388,7 +398,14 @@
     if (lab) lab.frame();
   }
   viewBtns.forEach((btn) => btn.addEventListener('click', () => setView(btn.dataset.view)));
-  deltaSelect.addEventListener('change', () => { delta = +deltaSelect.value; lab.restart(); });
+  function setDelta() {
+    delta = sign * strength();
+    deltaOut.textContent = fmtDelta(delta);
+    signBtns.forEach((b) => { const on = +b.dataset.sign === sign; b.classList.toggle('active', on); b.setAttribute('aria-pressed', String(on)); });
+  }
+  deltaRange.addEventListener('input', () => { setDelta(); lab.restart(); });
+  signBtns.forEach((b) => b.addEventListener('click', () => { sign = +b.dataset.sign; setDelta(); lab.restart(); }));
+  setDelta();
 
   // Drag the bubble (before the start) or tap anywhere on a map for a
   // weather station.
@@ -399,7 +416,7 @@
     const [x, y] = local(e), m = mapAt(x, y);
     if (!m) return;
     let onBubble = false;
-    if (lab.mode === 'setup' && delta > 0 && m.kind !== 'a') {
+    if (lab.mode === 'setup' && delta !== 0 && m.kind !== 'a') {
       const [bx, by] = toScreen(m, bubble.x, bubble.y);
       onBubble = Math.hypot(x - bx, y - by) < Math.max(RADIUS / P.L * m.w, 8) + 14;
     }
@@ -451,14 +468,14 @@
       passed = true;
       $('apart-feedback').textContent = t('karte.tasks.doneApart', l.fmtDays(model.day()));
       tasks.done('apart');
-      times[delta] = model.day();
+      times[Math.abs(delta)] = model.day();
       const keys = Object.keys(times).map(Number).sort((x, y) => y - x);
-      const label = (k) => t('karte.delta.values')[String(k)] || String(k);
+      const label = (k) => fmtDelta(sign * k);
       $('smaller-times').hidden = false;
       $('smaller-times').textContent = t('karte.tasks.times', keys.map((k) => t('karte.tasks.timeItem', label(k), l.fmtDays(times[k]))).join(' · '));
       if (keys.length >= 2 && !tasks.isDone('smaller')) {
         const small = Math.min(...keys), big = keys.find((k) => k > small);
-        $('smaller-feedback').textContent = t('karte.tasks.doneSmaller', l.fmtDays(times[small]), l.fmtDays(times[big]));
+        $('smaller-feedback').textContent = t('karte.tasks.doneSmaller', l.fmtDays(times[small]), l.fmtDays(times[big]), Math.round(big / small).toLocaleString('de-DE'));
         tasks.done('smaller');
       }
     }
