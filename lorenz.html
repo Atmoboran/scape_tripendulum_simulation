@@ -57,8 +57,9 @@
       <div class="readout-grid" aria-live="polite">
         <div><span data-t="readout.status"></span><b id="ro-status" data-t="readout.ready"></b></div>
         <div><span data-t="readout.time"></span><b id="ro-zeit"></b></div>
-        <div><span id="ro-dist-label" data-t="readout.distance"></span><b id="ro-dist"></b></div>
+        <div><span class="ro-label"><span id="ro-dist-label" data-t="readout.distance"></span><button type="button" class="info" aria-controls="dist-help" data-t-aria="readout.distanceInfoAria"></button></span><b id="ro-dist"></b></div>
       </div>
+      <div class="info-note" id="dist-help" hidden data-t-html="lorenz.readout.distanceNote"></div>
 
       <div class="ctl-row">
         <button type="button" class="btn icon primary" id="sim-primary" data-t-aria="lorenz.primary.startAria">

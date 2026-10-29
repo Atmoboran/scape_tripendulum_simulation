@@ -46,6 +46,9 @@
 .readout-grid > div { min-width: 0; }
 .readout-grid b { font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 :root[data-view="mobile"] .readout-grid b { font-size: 18px; }
+/* the (i) beside a value's name: small, so that column keeps the height of the others */
+.ro-label { display: flex; align-items: center; gap: 2px; height: 1.45em; }
+.readout-grid .info { width: 20px; height: 20px; margin: 0 0 0 4px; font-size: 12px; letter-spacing: 0; }
 
 /* ---- control rows under the stage ----
    Icons carry the meaning; the (i) at the end of the row names them all. */

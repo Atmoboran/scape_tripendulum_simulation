@@ -57,6 +57,10 @@ window.TEXTS = {
     status: 'Status',
     time: 'Zeit',
     distance: 'Abstand',
+    distanceInfoAria: 'Wie wird der Abstand berechnet?',
+    distanceNote: '<p><b>Abstand</b> ist die Luftlinie zwischen der untersten roten und der untersten blauen Kugel – so, als würdest du mit einem Lineal quer durchs Bild messen.</p>' +
+      '<p>Jeder Arm ist im Modell <b>1 m</b> lang. Ein Doppelpendel reicht also 2 m weit, und seine beiden unteren Kugeln können höchstens 4 m auseinander sein (beim Vierfachpendel 8 m).</p>' +
+      '<p>Gemessen wird nur die unterste Kugel: Liegen die unteren Kugeln genau aufeinander, können die oberen trotzdem ein wenig verschieden stehen. Beim Einstellen zeigt der Abstand, wie genau Blau auf Rot liegt; während der Bewegung, wie schnell sich die beiden trennen.</p>',
     ready: 'Bereit',
     running: 'Läuft',
     paused: 'Pausiert',

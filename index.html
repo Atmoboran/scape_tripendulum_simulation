@@ -59,8 +59,9 @@
       <div class="readout-grid" aria-live="polite">
         <div><span data-t="readout.status"></span><b id="ro-status" data-t="readout.ready"></b></div>
         <div><span data-t="readout.time"></span><b id="ro-zeit"></b></div>
-        <div><span data-t="readout.distance"></span><b id="ro-dist"></b></div>
+        <div><span class="ro-label"><span data-t="readout.distance"></span><button type="button" class="info" aria-controls="dist-help" data-t-aria="readout.distanceInfoAria"></button></span><b id="ro-dist"></b></div>
       </div>
+      <div class="info-note" id="dist-help" hidden data-t-html="readout.distanceNote"></div>
 
       <!-- Icons only; the (i) at the end of the row names every button. -->
       <div class="ctl-row">

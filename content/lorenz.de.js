@@ -16,6 +16,8 @@ window.TEXTS.lorenz = {
   },
   readout: {
     spread: 'Streuung',
+    distanceNote: '<p><b>Abstand</b> ist die Luftlinie zwischen Rot und Blau – nicht nur im Bild, sondern im Raum aller drei Zahlen x, y und z des Modells: die Wurzel aus (Unterschied in x)² + (Unterschied in y)² + (Unterschied in z)². Gemessen wird in Einheiten des Modells; der ganze Attraktor ist etwa 50 Einheiten groß.</p>' +
+      '<p>Ist die <b>Wolke</b> eingeschaltet, steht hier die <b>Streuung</b>: wie weit die 300 Punkte im Mittel von ihrer gemeinsamen Mitte entfernt sind (genau: die Wurzel aus dem mittleren Abstandsquadrat). Am Start ist sie winzig, über beide Flügel verteilt etwa 15 bis 20.</p>',
     time: s => s
   },
   primary: {
