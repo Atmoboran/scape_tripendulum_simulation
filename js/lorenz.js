@@ -140,7 +140,7 @@
   let start = DEFAULT_START.slice();
   let delta = +deltaSelect.value;
   let ensemble = false;
-  let a, b, trailA, trailB, cloud, elapsed, apartAt, startFar;
+  let a, b, trailA, trailB, cloud, elapsed, apartAt, startFar, loupeGone;
 
   function seed() {
     a = start.slice();
@@ -157,6 +157,7 @@
     }
     elapsed = 0;
     apartAt = null;
+    loupeGone = false;
     startFar = offAttractor(start) > FAR;
   }
 
@@ -227,7 +228,8 @@
   // Centred on Rot (or the middle of the cloud), magnified so that the gap
   // to Blau (or the cloud's spread) takes about a third of the loupe. The
   // factor goes in 1-2-5 steps so the label stays readable; once the gap
-  // shows in the big picture anyway, the loupe steps aside.
+  // shows in the big picture anyway, the loupe steps aside until the next
+  // start.
   function niceFactor(m) {
     const e = Math.floor(Math.log10(m)), f = m / Math.pow(10, e);
     return (f >= 5 ? 5 : f >= 2 ? 2 : 1) * Math.pow(10, e);
@@ -248,7 +250,10 @@
       c = a; gap = dist(a, b);
     }
     const m = niceFactor(Math.max(1, LW * 0.32 / Math.max(gap * S, 1e-12)));
-    loupe.hidden = m < 5;
+    // Once the two have come apart, the loupe stays away for this run --
+    // even when they happen to pass close by each other again later.
+    if (m < 5 && mode !== STATE_SETUP) loupeGone = true;
+    loupe.hidden = m < 5 || loupeGone;
     if (loupe.hidden) return;
     loupeLabel.textContent = t('lorenz.loupe', m.toLocaleString('de-DE').replace(/\./g, '\u202f'));
     const g = loupeCtx;

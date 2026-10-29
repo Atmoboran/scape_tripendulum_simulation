@@ -33,7 +33,7 @@ window.TEXTS.lorenz = {
       '<p><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4l14 8-14 8V4z" fill="currentColor" stroke="none"/></svg></span> startet, dann <b>Pause</b> und <b>Weiter</b>. <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg></span> springt zurück zum Startpunkt.</p>' +
       '<p><span class="ico"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="12" r="2.2"/><circle cx="6" cy="9" r="1.6"/><circle cx="17.5" cy="7.5" r="1.6"/><circle cx="8" cy="17" r="1.6"/><circle cx="17" cy="16" r="1.6"/></svg></span> schickt statt zwei Punkten eine <b>Wolke</b> aus 300 fast gleichen Starts los – so wie Wetterdienste viele Vorhersagen auf einmal rechnen. <b>Streuung</b> sagt, wie weit die Wolke auseinandergezogen ist.</p>' +
       '<p>Im Bild: <b>ziehen</b> dreht den Attraktor, <b>tippen</b> setzt dort einen neuen Startpunkt – gern auch weit weg vom Schmetterling.</p>' +
-      '<p>Die <b>Lupe</b> unten links vergrößert rund um Rot so stark, dass man Blau daneben sieht – am Anfang oft hunderttausendfach. Während die Lücke wächst, zoomt sie heraus und verschwindet, sobald man den Unterschied auch so sieht.</p>'
+      '<p>Die <b>Lupe</b> unten links vergrößert rund um Rot so stark, dass man Blau daneben sieht – am Anfang oft hunderttausendfach. Während die Lücke wächst, zoomt sie heraus und verschwindet, sobald man den Unterschied auch so sieht – bis zum nächsten Start.</p>'
   },
   delta: {
     label: 'Unterschied am Start',
