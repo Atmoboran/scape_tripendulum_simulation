@@ -1,5 +1,6 @@
-// Physics of the N-fold chain pendulum (no friction): equations of motion in
-// mass-matrix form, solved with Gaussian elimination, integrated with RK4.
+// Physics of the N-fold chain pendulum: equations of motion in mass-matrix
+// form, solved with Gaussian elimination, integrated with RK4. Friction is
+// optional (params.friction, 0 = none).
 // Pure functions, no DOM – exposed as window.Pendulum.
 (() => {
 'use strict';
@@ -11,9 +12,11 @@
 //   M_ii = l_i^2 * S_i
 //   b_i  = -sum_j l_i*l_j*sin(t_i-t_j)*w_j^2*S_max(i,j)  -  g*l_i*sin(t_i)*S_i
 // where S_k = sum of masses from k..N-1 (this bob and everything below it).
+// Friction: a damping term  -k*w_i*M_ii  on every joint, so each arm loses
+// speed at roughly the rate k whatever its place in the chain.
 const G = 9.81;
 
-function buildSystem(theta, omega, m, l) {
+function buildSystem(theta, omega, m, l, k) {
   const N = theta.length;
   const S = new Array(N);
   let acc = 0;
@@ -32,7 +35,7 @@ function buildSystem(theta, omega, m, l) {
       if (j2 === i) continue;
       c += l[i] * l[j2] * Math.sin(theta[i] - theta[j2]) * omega[j2] * omega[j2] * S[Math.max(i, j2)];
     }
-    b[i] = -c - G * l[i] * Math.sin(theta[i]) * S[i];
+    b[i] = -c - G * l[i] * Math.sin(theta[i]) * S[i] - k * omega[i] * l[i] * l[i] * S[i];
   }
   return { M: M, b: b };
 }
@@ -63,11 +66,11 @@ function solveLinear(M, b) {
   return x;
 }
 
-// state = [t0,w0,t1,w1,...]; params = {N,m,l}
+// state = [t0,w0,t1,w1,...]; params = {N,m,l,friction}
 function deriv(state, p) {
   const N = p.N, theta = new Array(N), omega = new Array(N);
   for (let i = 0; i < N; i++) { theta[i] = state[2 * i]; omega[i] = state[2 * i + 1]; }
-  const sys = buildSystem(theta, omega, p.m, p.l);
+  const sys = buildSystem(theta, omega, p.m, p.l, p.friction || 0);
   const alpha = solveLinear(sys.M, sys.b);
   const out = new Array(2 * N);
   for (let i2 = 0; i2 < N; i2++) { out[2 * i2] = omega[i2]; out[2 * i2 + 1] = alpha[i2]; }

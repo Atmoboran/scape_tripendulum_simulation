@@ -5,7 +5,7 @@
 window.TEXTS = {
   lang: 'de',
   pageTitle: 'Wetter ist Chaos – Chaos-Pendel',
-  description: 'Ein Doppel- oder Dreifachpendel im Browser: Stelle zwei Pendel selbst ein und beobachte, wie aus winzigen Unterschieden völlig verschiedene Wege werden – über das Chaos hinter der Wettervorhersage.',
+  description: 'Ein Doppel-, Dreifach- oder Vierfachpendel im Browser: Stelle zwei Pendel selbst ein und beobachte, wie aus winzigen Unterschieden völlig verschiedene Wege werden – über das Chaos hinter der Wettervorhersage.',
 
   // Texts of the shared kit (js/view.js, js/kit.js).
   kit: {
@@ -20,17 +20,27 @@ window.TEXTS = {
     devLink: '(dev)'
   },
 
-  poster: {
-    headline: 'Wetter ist<br>Chaos',
-    lead: 'Zwei fast gleiche Starts. Zwei völlig verschiedene Wege.'
+  chapters: {
+    aria: 'Kapitel',
+    one: 'Pendel',
+    two: 'Lorenz',
+    next: 'Kapitel 2: Der Lorenz-Attraktor',
+    prev: 'Kapitel 1: Das Chaos-Pendel'
   },
-  intro: 'Stell Rot und Blau per Fingerzug ein – fast gleich oder ganz verschieden. Drück auf Start und schau, wie sich ihre Wege trennen.',
+
+  poster: {
+    headline: 'Wetter ist Chaos',
+    lead: 'Stell zwei Pendel fast gleich ein – und schau, was passiert.'
+  },
 
   labels: {
     type: 'Pendelart',
-    simple: 'Einfach­pendel',
-    double: 'Doppel­pendel',
-    triple: 'Dreifach­pendel',
+    simple: 'Einfachpendel',
+    double: 'Doppelpendel',
+    triple: 'Dreifachpendel',
+    quad: 'Vierfachpendel',
+    typeInfoAria: 'Pendelarten erklären',
+    typeNote: '<p>Ein <b>Einfachpendel</b> schwingt brav und vorhersagbar. Ab dem <b>Doppelpendel</b> wird es chaotisch – und je mehr Glieder, desto schneller trennen sich Rot und Blau. Ein Wechsel der Pendelart setzt beide Pendel zurück.</p>',
     editor: 'Pendel einstellen',
     red: 'Rot',
     blue: 'Blau',
@@ -39,44 +49,58 @@ window.TEXTS = {
   badge: {
     placeRed: 'Zieh Rot in Position',
     placeBlue: 'Zieh Blau in Position',
-    nowBlue: 'Jetzt Blau in Position ziehen'
+    nowBlue: 'Jetzt Blau in Position ziehen',
+    frictionOn: 'Reibung an',
+    frictionOff: 'Reibung aus'
   },
   readout: {
     status: 'Status',
     time: 'Zeit',
+    distance: 'Abstand',
     ready: 'Bereit',
     running: 'Läuft',
     paused: 'Pausiert',
-    seconds: s => s + ' s'
+    seconds: s => s + ' s',
+    cm: v => v + ' cm',
+    m: v => v + ' m'
   },
   primary: {
-    start: 'Start',
-    startSub: 'Beide Pendel loslassen',
-    stop: 'Stopp',
-    stopSub: 'Simulation anhalten',
-    resume: 'Weiter',
-    resumeSub: 'Simulation fortsetzen',
-    reset: 'Reset',
-    resetSub: 'Zurück zum Einstellen'
+    startAria: 'Start: beide Pendel loslassen',
+    pauseAria: 'Pause',
+    resumeAria: 'Weiter',
+    resetAria: 'Zurücksetzen',
+    frictionAria: 'Reibung an oder aus'
   },
-  hint: 'Die Spuren verblassen mit der Zeit. Das Pendel ist ein Modell ohne Reibung: Echte Pendel werden langsamer – das Chaos bleibt.',
+  controls: {
+    infoAria: 'Bedienung erklären',
+    note: '<p>Stell Rot und Blau per Fingerzug ein – fast gleich oder ganz verschieden. Tipp dazu auf ein Pendel oder oben links auf <b>Rot</b> / <b>Blau</b>. <b>Abstand</b> zeigt, wie weit die beiden unteren Kugeln auseinander sind.</p>' +
+      '<p><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4l14 8-14 8V4z" fill="currentColor" stroke="none"/></svg></span> lässt beide Pendel los, dann <b>Pause</b> und <b>Weiter</b>. Schau, wie sich ihre Wege trennen – die Spuren verblassen mit der Zeit.</p>' +
+      '<p><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg></span> holt die Pendel zurück an ihren Start – so kannst du fein nachjustieren. Noch einmal gedrückt hängen beide wieder gerade nach unten.</p>' +
+      '<p><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12c1.5-9 3.5-9 5 0s3 6 4.5 0 2.5-4 3.5 0 2 2.5 3 0 1.5-1 2.5 0"/></svg></span> schaltet die <b>Reibung</b> an oder aus. Ohne Reibung schwingt das Pendel ewig – ein Modell. Echte Pendel werden langsamer und kommen zur Ruhe; das Chaos am Anfang bleibt.</p>'
+  },
 
   tasks: {
+    open: 'Aufgaben',
     title: 'Aufgaben',
+    closeAria: 'Aufgaben schließen',
+    intro: 'Sie haken sich von selbst ab, sobald du sie geschafft hast.',
+    progress: (done, total) => done + '/' + total,
     butterfly: 'Stell Rot und Blau fast genau gleich ein und starte. Wann trennen sich ihre Wege?',
     calm: 'Lenk beide nur wenig aus (unter 20°). Bleiben sie 10 Sekunden zusammen?',
+    precision: '<b>Für Profis:</b> Zieh mindestens eine Kugel über die Aufhängung und setz Blau so genau wie möglich auf Rot. Schaffst du es, dass die unteren Kugeln <b>4 Sekunden</b> lang weniger als <b>10 cm</b> auseinander bleiben?',
+    precisionBest: s => 'Dein bester Versuch: ' + s + ' s',
     doneButterfly: 'Getrennt – trotz fast gleichem Start!',
-    doneCalm: 'Ruhig geblieben – wenig Schwung, wenig Chaos.'
+    doneCalm: 'Ruhig geblieben – wenig Schwung, wenig Chaos.',
+    donePrecision: 'Geschafft! Doch schau weiter zu: Kurz danach trennen sie sich trotzdem. Mehr Genauigkeit schiebt das Chaos nur ein wenig hinaus – wie beim Wetter.'
   },
-  merke: {
-    title: 'Merke',
-    text: 'Ein winziger Unterschied am Anfang wird beim Chaos-Pendel riesig. Genau deshalb kann niemand das Wetter für Wochen im Voraus berechnen. Mit wenig Schwung bleibt das Pendel aber berechenbar – wie ruhiges Hochdruckwetter.'
-  },
+
+  // LOCAL
+  moreChaos: 'In SCAPE° begegnet dir das Chaos immer wieder: in den Turbulenzen am Wirbeltouch oder am Galtonbrett.',
 
   topics: {
     what: {
-      title: 'Was ist ein Doppel- oder Dreifachpendel?',
-      body: '<p>Hängt man ein zweites Pendel an das Ende eines ersten – oder gleich ein drittes an das zweite –, entsteht eines der einfachsten chaotischen Systeme der Physik. Ein einzelnes Pendel schwingt vorhersagbar hin und her. Mehrere gekoppelte Pendel dagegen taumeln, überschlagen sich und wechseln unregelmäßig zwischen ruhigem Schwingen und wilden Drehungen – obwohl die Bewegungsgleichungen genau bekannt sind. Was fehlt, ist nicht die Formel, sondern die Vorhersagbarkeit.</p>'
+      title: 'Was ist ein Mehrfachpendel?',
+      body: '<p>Hängt man ein zweites Pendel an das Ende eines ersten – oder gleich ein drittes und viertes daran –, entsteht eines der einfachsten chaotischen Systeme der Physik. Ein einzelnes Pendel schwingt vorhersagbar hin und her. Mehrere gekoppelte Pendel dagegen taumeln, überschlagen sich und wechseln unregelmäßig zwischen ruhigem Schwingen und wilden Drehungen – obwohl die Bewegungsgleichungen genau bekannt sind. Was fehlt, ist nicht die Formel, sondern die Vorhersagbarkeit.</p>'
     },
     weather: {
       title: 'Was hat das mit dem Wetter zu tun?',

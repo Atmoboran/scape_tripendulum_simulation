@@ -16,6 +16,10 @@
 <header class="top">
   <span class="logo" data-brand="logo"></span>
   <div class="top-right">
+    <nav class="nav" data-t-aria="chapters.aria">
+      <a href="index.html" aria-current="page"><span class="num">1</span><span data-t="chapters.one"></span></a>
+      <a href="lorenz.html"><span class="num">2</span><span data-t="chapters.two"></span></a>
+    </nav>
     <button type="button" class="view-toggle"></button>
   </div>
 </header>
@@ -37,28 +41,16 @@
 
 <main class="page">
   <div class="lab">
-    <div class="lab-pre">
-      <p class="text" data-t="intro"></p>
-      <div class="section-label" data-t="labels.type"></div>
-      <div class="seg-row" id="mode-row">
-        <button type="button" class="btn" id="mode-simple" data-n="1" data-t="labels.simple"></button>
-        <button type="button" class="btn active" id="mode-double" data-n="2" data-t="labels.double"></button>
-        <button type="button" class="btn" id="mode-triple" data-n="3" data-t="labels.triple"></button>
-      </div>
-      <div class="section-label" data-t="labels.editor"></div>
-      <div class="seg-row" id="editor-row">
-        <button type="button" class="btn obj active" id="editor-a" data-editor="A"><i></i><span data-t="labels.red"></span></button>
-        <button type="button" class="btn obj" id="editor-b" data-editor="B"><i></i><span data-t="labels.blue"></span></button>
-      </div>
-    </div>
-
     <div class="lab-stage">
-      <div class="stage-frame square fit" id="stage" role="img" data-t-aria="labels.stageAria">
-        <canvas id="trail-canvas"></canvas>
-        <canvas id="draw-canvas"></canvas>
-        <div class="stage-legend" aria-hidden="true">
-          <span><i class="dot-a"></i><span id="legend-a" data-t="labels.red"></span></span>
-          <span><i class="dot-b"></i><span id="legend-b" data-t="labels.blue"></span></span>
+      <div class="stage-frame square fit" id="stage-frame">
+        <div id="stage" role="img" data-t-aria="labels.stageAria">
+          <canvas id="draw-canvas"></canvas>
+        </div>
+        <!-- Which pendulum the finger moves: in the picture, beside the
+             pendulums themselves. Tapping a pendulum selects it as well. -->
+        <div class="pick-ctl" id="editor-row" role="group" data-t-aria="labels.editor">
+          <button type="button" class="pick active" id="editor-a" data-editor="A" aria-pressed="true"><i></i><span data-t="labels.red"></span></button>
+          <button type="button" class="pick" id="editor-b" data-editor="B" aria-pressed="false"><i></i><span data-t="labels.blue"></span></button>
         </div>
       </div>
     </div>
@@ -67,38 +59,69 @@
       <div class="readout-grid" aria-live="polite">
         <div><span data-t="readout.status"></span><b id="ro-status" data-t="readout.ready"></b></div>
         <div><span data-t="readout.time"></span><b id="ro-zeit"></b></div>
+        <div><span data-t="readout.distance"></span><b id="ro-dist"></b></div>
       </div>
-      <div class="btn-row">
-        <button type="button" class="btn big primary" id="sim-primary">
-          <svg id="sim-primary-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 4l14 8-14 8V4z" fill="currentColor" stroke="none"/></svg>
-          <span><span id="sim-primary-label" data-t="primary.start"></span><span class="sub" id="sim-primary-sub" data-t="primary.startSub"></span></span>
-        </button>
-        <button type="button" class="btn big" id="sim-reset">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg>
-          <span><span data-t="primary.reset"></span><span class="sub" data-t="primary.resetSub"></span></span>
-        </button>
-      </div>
-      <p class="hint" data-t="hint"></p>
 
-      <div class="tasks" id="tp-tasks">
-        <h3 data-t="tasks.title"></h3>
-        <ul>
-          <li data-task="butterfly"><span class="box"></span><span data-t="tasks.butterfly"></span></li>
-          <li data-task="calm"><span class="box"></span><span data-t="tasks.calm"></span></li>
-        </ul>
+      <!-- Icons only; the (i) at the end of the row names every button. -->
+      <div class="ctl-row">
+        <button type="button" class="btn icon primary" id="sim-primary" data-t-aria="primary.startAria">
+          <svg id="sim-primary-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 4l14 8-14 8V4z" fill="currentColor" stroke="none"/></svg>
+        </button>
+        <button type="button" class="btn icon" id="sim-reset" data-t-aria="primary.resetAria">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg>
+        </button>
+        <button type="button" class="btn icon" id="sim-friction" aria-pressed="false" data-t-aria="primary.frictionAria">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 12c1.5-9 3.5-9 5 0s3 6 4.5 0 2.5-4 3.5 0 2 2.5 3 0 1.5-1 2.5 0"/></svg>
+        </button>
+        <button type="button" class="info" aria-controls="controls-help" data-t-aria="controls.infoAria"></button>
       </div>
-      <div class="merke locked" data-for="tp-tasks">
-        <h3 data-t="merke.title"></h3>
-        <p data-t="merke.text"></p>
-        <span class="locked-note"></span>
+
+      <div class="ctl-row">
+        <label class="select-field">
+          <span class="select-label" data-t="labels.type"></span>
+          <select id="mode-select">
+            <option value="1" data-t="labels.simple"></option>
+            <option value="2" data-t="labels.double" selected></option>
+            <option value="3" data-t="labels.triple"></option>
+            <option value="4" data-t="labels.quad"></option>
+          </select>
+        </label>
+        <button type="button" class="info" aria-controls="type-help" data-t-aria="labels.typeInfoAria"></button>
       </div>
+      <div class="info-note" id="controls-help" hidden data-t-html="controls.note"></div>
+      <div class="info-note" id="type-help" hidden data-t-html="labels.typeNote"></div>
+
+      <button type="button" class="btn tasks-open" id="tasks-open" aria-haspopup="dialog" aria-controls="tasks-dialog">
+        <span data-t="tasks.open"></span> <span class="quiz-progress" id="tasks-progress"></span>
+      </button>
     </div>
   </div>
+
+  <dialog class="quiz-dialog" id="tasks-dialog" aria-labelledby="tasks-title">
+    <div class="quiz-head">
+      <h2 id="tasks-title" data-t="tasks.title"></h2>
+      <button type="button" class="quiz-close" id="tasks-close" data-t-aria="tasks.closeAria">&times;</button>
+    </div>
+    <p class="quiz-intro" data-t="tasks.intro"></p>
+    <div id="tp-tasks">
+      <ol class="quiz-list">
+        <li class="quiz-item" data-task="butterfly"><p class="quiz-q" data-t="tasks.butterfly"></p><p class="quiz-feedback" data-t="tasks.doneButterfly"></p></li>
+        <li class="quiz-item" data-task="calm"><p class="quiz-q" data-t="tasks.calm"></p><p class="quiz-feedback" data-t="tasks.doneCalm"></p></li>
+        <li class="quiz-item" data-task="precision"><p class="quiz-q" data-t-html="tasks.precision"></p><p class="quiz-best" id="precision-best" hidden></p><p class="quiz-feedback" data-t="tasks.donePrecision"></p></li>
+      </ol>
+    </div>
+  </dialog>
 
   <div class="topics">
     <details class="topic"><summary data-t="topics.what.title"></summary><div class="topic-body" data-t-html="topics.what.body"></div></details>
     <details class="topic"><summary data-t="topics.weather.title"></summary><div class="topic-body" data-t-html="topics.weather.body"></div></details>
     <details class="topic"><summary data-t="topics.energy.title"></summary><div class="topic-body" data-t-html="topics.energy.body"></div></details>
+  </div>
+
+  <p class="text more-chaos" data-t-html="moreChaos"></p>
+
+  <div class="next-part">
+    <a class="btn big primary" href="lorenz.html"><span data-t="chapters.next"></span> <span aria-hidden="true">→</span></a>
   </div>
 </main>
 
@@ -111,6 +134,7 @@
 <script src="js/texts.js"></script>
 <script src="js/brand.js"></script>
 <script src="js/kit.js"></script>
+<script src="js/tasks-dialog.js"></script>
 <script src="js/physics.js"></script>
 <script src="js/app.js"></script>
 </body>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lorenz-Attraktor</title>
+<meta name="description" content="">
+<!-- Structure only. Design: theme/ · texts: content/ · layout: css/ · behaviour: js/ -->
+<script src="js/view.js" data-app="tripendel"></script>
+<link rel="stylesheet" href="theme/theme.css">
+<link rel="stylesheet" href="css/kit.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<header class="top">
+  <span class="logo" data-brand="logo"></span>
+  <div class="top-right">
+    <nav class="nav" data-t-aria="chapters.aria">
+      <a href="index.html"><span class="num">1</span><span data-t="chapters.one"></span></a>
+      <a href="lorenz.html" aria-current="page"><span class="num">2</span><span data-t="chapters.two"></span></a>
+    </nav>
+    <button type="button" class="view-toggle"></button>
+  </div>
+</header>
+
+<div class="poster small">
+  <div class="f f1"></div><div class="f f2"></div><div class="f f3"></div>
+  <svg class="l2" viewBox="0 0 300 220" aria-hidden="true">
+    <path d="M150,110 C120,40 30,30 40,110 C50,180 120,170 150,110 C180,50 250,40 262,110 C272,180 180,180 150,110" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round"/>
+    <circle cx="40" cy="110" r="10" fill="currentColor"/><circle cx="262" cy="110" r="10" fill="currentColor"/>
+  </svg>
+  <svg class="l3" viewBox="0 0 400 400" aria-hidden="true"><ellipse cx="140" cy="200" rx="110" ry="150"/><ellipse cx="270" cy="200" rx="110" ry="150"/></svg>
+  <div class="poster-text">
+    <h1 class="headline" data-t-html="lorenz.poster.headline"></h1>
+    <p class="lead" data-t="lorenz.poster.lead"></p>
+  </div>
+</div>
+
+<main class="page">
+  <div class="lab">
+    <div class="lab-stage">
+      <div class="stage-frame square fit" id="stage-frame">
+        <div id="stage" role="img" data-t-aria="lorenz.stageAria">
+          <canvas id="ghost-canvas"></canvas>
+          <canvas id="draw-canvas"></canvas>
+        </div>
+        <div class="pick-ctl" aria-hidden="true">
+          <span class="pick" id="legend-a"><i></i><span data-t="labels.red"></span></span>
+          <span class="pick" id="legend-b"><i></i><span data-t="labels.blue"></span></span>
+        </div>
+        <p class="stage-note" data-t="lorenz.stageNote"></p>
+      </div>
+    </div>
+
+    <div class="lab-post">
+      <div class="readout-grid" aria-live="polite">
+        <div><span data-t="readout.status"></span><b id="ro-status" data-t="readout.ready"></b></div>
+        <div><span data-t="readout.time"></span><b id="ro-zeit"></b></div>
+        <div><span id="ro-dist-label" data-t="readout.distance"></span><b id="ro-dist"></b></div>
+      </div>
+
+      <div class="ctl-row">
+        <button type="button" class="btn icon primary" id="sim-primary" data-t-aria="lorenz.primary.startAria">
+          <svg id="sim-primary-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 4l14 8-14 8V4z" fill="currentColor" stroke="none"/></svg>
+        </button>
+        <button type="button" class="btn icon" id="sim-reset" data-t-aria="lorenz.primary.resetAria">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg>
+        </button>
+        <button type="button" class="btn icon" id="sim-ensemble" aria-pressed="false" data-t-aria="lorenz.primary.ensembleAria">
+          <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><circle cx="12" cy="12" r="2.2"/><circle cx="6" cy="9" r="1.6"/><circle cx="17.5" cy="7.5" r="1.6"/><circle cx="8" cy="17" r="1.6"/><circle cx="17" cy="16" r="1.6"/><circle cx="3.5" cy="14" r="1.1"/><circle cx="20.5" cy="12" r="1.1"/><circle cx="12" cy="4" r="1.1"/><circle cx="12.5" cy="20.5" r="1.1"/></svg>
+        </button>
+        <button type="button" class="info" aria-controls="controls-help" data-t-aria="controls.infoAria"></button>
+      </div>
+
+      <div class="ctl-row">
+        <label class="select-field">
+          <span class="select-label" data-t="lorenz.delta.label"></span>
+          <select id="delta-select">
+            <option value="1e-2" data-t="lorenz.delta.big" selected></option>
+            <option value="1e-5" data-t="lorenz.delta.small"></option>
+            <option value="1e-8" data-t="lorenz.delta.tiny"></option>
+          </select>
+        </label>
+        <button type="button" class="info" aria-controls="delta-help" data-t-aria="lorenz.delta.infoAria"></button>
+      </div>
+      <div class="info-note" id="controls-help" hidden data-t-html="lorenz.controls.note"></div>
+      <div class="info-note" id="delta-help" hidden data-t-html="lorenz.delta.note"></div>
+
+      <button type="button" class="btn tasks-open" id="tasks-open" aria-haspopup="dialog" aria-controls="tasks-dialog">
+        <span data-t="tasks.open"></span> <span class="quiz-progress" id="tasks-progress"></span>
+      </button>
+    </div>
+  </div>
+
+  <dialog class="quiz-dialog" id="tasks-dialog" aria-labelledby="tasks-title">
+    <div class="quiz-head">
+      <h2 id="tasks-title" data-t="tasks.title"></h2>
+      <button type="button" class="quiz-close" id="tasks-close" data-t-aria="tasks.closeAria">&times;</button>
+    </div>
+    <p class="quiz-intro" data-t="tasks.intro"></p>
+    <div id="lz-tasks">
+      <ol class="quiz-list">
+        <li class="quiz-item" data-task="wings"><p class="quiz-q" data-t="lorenz.tasks.wings"></p><p class="quiz-feedback" data-t="lorenz.tasks.doneWings"></p></li>
+        <li class="quiz-item" data-task="precise"><p class="quiz-q" data-t="lorenz.tasks.precise"></p><p class="quiz-best" id="precise-times" hidden></p><p class="quiz-feedback" id="precise-feedback"></p></li>
+        <li class="quiz-item" data-task="ensemble"><p class="quiz-q" data-t="lorenz.tasks.ensemble"></p><p class="quiz-feedback" data-t="lorenz.tasks.doneEnsemble"></p></li>
+      </ol>
+    </div>
+  </dialog>
+
+  <div class="topics">
+    <details class="topic"><summary data-t="lorenz.topics.what.title"></summary><div class="topic-body" data-t-html="lorenz.topics.what.body"></div></details>
+    <details class="topic"><summary data-t="lorenz.topics.butterfly.title"></summary><div class="topic-body" data-t-html="lorenz.topics.butterfly.body"></div></details>
+    <details class="topic"><summary data-t="lorenz.topics.ensemble.title"></summary><div class="topic-body" data-t-html="lorenz.topics.ensemble.body"></div></details>
+  </div>
+
+  <p class="text more-chaos" data-t-html="moreChaos"></p>
+
+  <div class="next-part back">
+    <a class="btn big" href="index.html"><span aria-hidden="true">←</span> <span data-t="chapters.prev"></span></a>
+  </div>
+</main>
+
+<footer class="foot">
+  <p class="brand-line" data-brand="line"></p>
+</footer>
+
+<script src="theme/theme.js"></script>
+<script src="content/texts.de.js"></script>
+<script src="content/lorenz.de.js"></script>
+<script src="js/texts.js"></script>
+<script src="js/brand.js"></script>
+<script src="js/kit.js"></script>
+<script src="js/tasks-dialog.js"></script>
+<script src="js/lorenz.js"></script>
+</body>
+</html>

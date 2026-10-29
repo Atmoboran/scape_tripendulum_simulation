@@ -6,54 +6,47 @@
   const PC = window.THEME.pendulum;
   // two things compared: always red vs blue (theme data colours)
   PC.a = window.THEME.data.pairA; PC.b = window.THEME.data.pairB;
-  function rgba(hex, a) {
-    const v = parseInt(hex.slice(1), 16);
-    return 'rgba(' + ((v >> 16) & 255) + ',' + ((v >> 8) & 255) + ',' + (v & 255) + ',' + a + ')';
-  }
-  const COL_A = PC.a, COL_B = PC.b, TRAIL_A = rgba(PC.a, 0.9), TRAIL_B = rgba(PC.b, 0.85), FADE = rgba(PC.stage, 0.045);
+  const COL_A = PC.a, COL_B = PC.b;
 
   // ============ DOM / CANVAS SETUP ============
+  const stageFrame = document.getElementById('stage-frame');
   const stage = document.getElementById('stage');
-  const trailCanvas = document.getElementById('trail-canvas');
   const drawCanvas = document.getElementById('draw-canvas');
-  const trailCtx = trailCanvas.getContext('2d');
   const drawCtx = drawCanvas.getContext('2d');
 
   const primaryBtn = document.getElementById('sim-primary');
-  const primaryLabel = document.getElementById('sim-primary-label');
-  const primarySub = document.getElementById('sim-primary-sub');
   const primaryIcon = document.getElementById('sim-primary-icon');
   const resetBtn = document.getElementById('sim-reset');
-  const hint = SCAPE.badge(stage);
-  const tasks = SCAPE.tasks(document.getElementById('tp-tasks'));
+  const frictionBtn = document.getElementById('sim-friction');
+  const hint = SCAPE.badge(stageFrame);
+  const tasks = SCAPE.taskDialog('tp-tasks');
+  const precisionBest = document.getElementById('precision-best');
   const roStatus = document.getElementById('ro-status');
   const roZeit = document.getElementById('ro-zeit');
+  const roDist = document.getElementById('ro-dist');
 
-  const modeRow = document.getElementById('mode-row');
-  const modeSimpleBtn = document.getElementById('mode-simple');
-  const modeDoubleBtn = document.getElementById('mode-double');
-  const modeTripleBtn = document.getElementById('mode-triple');
-  const editorRow = document.getElementById('editor-row');
+  const modeSelect = document.getElementById('mode-select');
   const editorABtn = document.getElementById('editor-a');
   const editorBBtn = document.getElementById('editor-b');
-  const legendA = document.getElementById('legend-a');
-  const legendB = document.getElementById('legend-b');
 
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   let W = 0, H = 0;
   let pivotX = 0, pivotY = 0, scale = 1;
 
   const SEG_LEN = 1.0; // meters, per arm
+  const FRICTION = 0.15; // 1/s when the friction button is on
 
-  function layout() {
+  // Resizing the canvas wipes it, so only do that when the stage really
+  // changed size -- a phone fires "resize" while scrolling (the address bar
+  // comes and goes) and when the tab comes back, and that used to leave an
+  // empty box behind until the next simulation frame.
+  function layout(force) {
     const rect = stage.getBoundingClientRect();
-    W = rect.width;
-    H = rect.height;
-    [trailCanvas, drawCanvas].forEach((c) => {
-      c.width = Math.round(W * dpr);
-      c.height = Math.round(H * dpr);
-    });
-    trailCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const w = rect.width, h = rect.height;
+    if (!force && Math.abs(w - W) < 0.5 && Math.abs(h - H) < 0.5) return false;
+    W = w; H = h;
+    drawCanvas.width = Math.round(W * dpr);
+    drawCanvas.height = Math.round(H * dpr);
     drawCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     // Pivot dead-center: a full loop reaches the same distance in every
@@ -64,9 +57,7 @@
 
     const totalLen = PARAMS.N * SEG_LEN;
     scale = (Math.min(W, H) * 0.46) / totalLen;
-
-    trailCtx.fillStyle = PC.stage;
-    trailCtx.fillRect(0, 0, W, H);
+    return true;
   }
 
   // ============ STATE ============
@@ -74,18 +65,29 @@
   let mode = STATE_SETUP;
   let activeEditor = 'A';
 
-  const PARAMS = { N: 2, m: [1, 1], l: [1, 1] };
+  const PARAMS = { N: 2, m: [1, 1], l: [1, 1], friction: 0 };
   let stateA = zeroState(2), stateB = zeroState(2);
+  let startA = null, startB = null; // the positions of the last Start
   let elapsed = 0;
-  let lastPrevA = null, lastPrevB = null;
-  let drag = null; // { editor, index } | null
+  // The tips' paths of the last frames, in metres: drawn fresh every frame
+  // with fading strength, so they survive a resize and never tint the stage.
+  let trailA = [], trailB = [];
+  const TRAIL_FRAMES = 110;
+  let drag = null; // index of the bob being dragged | null
 
   function toPx(pt) { return { x: pivotX + pt.x * scale, y: pivotY + pt.y * scale }; }
 
-  function bobRadius(i, N) { return 7 + i * (N === 3 ? 1.6 : 2.6); }
+  function bobRadius(i, N) { return 7 + i * (N >= 3 ? 4.8 / N : 2.6); }
+
+  function tip(st) { return jointPositions(st, PARAMS)[PARAMS.N - 1]; }
+  function tipDistance() {
+    const a = tip(stateA), b = tip(stateB);
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  }
 
   // ============ DRAWING ============
   function clearDraw() { drawCtx.clearRect(0, 0, W, H); }
+  function clearTrail() { trailA = []; trailB = []; }
 
   function drawPivot() {
     drawCtx.beginPath();
@@ -126,39 +128,64 @@
     return px;
   }
 
-  function fadeTrail() {
-    trailCtx.fillStyle = FADE;
-    trailCtx.fillRect(0, 0, W, H);
+  // Oldest part faintest: the path is drawn in bands of rising strength.
+  function drawTrail(trail, color) {
+    const n = trail.length, BANDS = 10;
+    if (n < 2) return;
+    drawCtx.save();
+    drawCtx.strokeStyle = color;
+    drawCtx.lineWidth = 2.4;
+    drawCtx.lineCap = 'round';
+    drawCtx.lineJoin = 'round';
+    for (let k = 0; k < BANDS; k++) {
+      const from = Math.floor(n * k / BANDS), to = Math.min(n - 1, Math.floor(n * (k + 1) / BANDS));
+      if (to <= from) continue;
+      drawCtx.globalAlpha = 0.85 * Math.pow((k + 1) / BANDS, 1.6);
+      drawCtx.beginPath();
+      let q = toPx(trail[from]);
+      drawCtx.moveTo(q.x, q.y);
+      for (let i = from + 1; i <= to; i++) { q = toPx(trail[i]); drawCtx.lineTo(q.x, q.y); }
+      drawCtx.stroke();
+    }
+    drawCtx.restore();
   }
 
-  function trailSegment(prev, cur, color) {
-    if (!prev) return;
-    trailCtx.strokeStyle = color;
-    trailCtx.lineWidth = 2.4;
-    trailCtx.lineCap = 'round';
-    trailCtx.beginPath();
-    trailCtx.moveTo(prev.x, prev.y);
-    trailCtx.lineTo(cur.x, cur.y);
-    trailCtx.stroke();
-  }
-
-  function renderSetup() {
+  // Draws the pendulums as they are now, in any state. Called on every
+  // frame, after a drag and whenever the page comes back into view.
+  function render() {
     clearDraw();
+    drawTrail(trailB, COL_B);
+    drawTrail(trailA, COL_A);
     drawPivot();
-    if (activeEditor === 'A') {
+    if (mode === STATE_SETUP && activeEditor === 'A') {
       drawPendulum(stateB, COL_B, 0.32);
       drawPendulum(stateA, COL_A, 1);
-    } else {
+    } else if (mode === STATE_SETUP) {
       drawPendulum(stateA, COL_A, 0.32);
       drawPendulum(stateB, COL_B, 1);
+    } else {
+      drawPendulum(stateB, COL_B, 1);
+      drawPendulum(stateA, COL_A, 1);
     }
+    roDist.textContent = fmtDist(tipDistance());
+  }
+
+  // ============ READOUT ============
+  function fmt1(n) { return n.toFixed(1).replace('.', ','); }
+  // Tip distance in metres (one arm is 1 m): centimetres up close, metres
+  // once they are far apart.
+  function fmtDist(m) {
+    const cm = m * 100;
+    if (cm < 10) return t('readout.cm', fmt1(cm));
+    if (cm < 100) return t('readout.cm', String(Math.round(cm)));
+    return t('readout.m', fmt1(m));
   }
 
   // ============ INTERACTION ============
   function localPoint(ev) {
     const rect = stage.getBoundingClientRect();
-    const t = (ev.touches && ev.touches[0]) || ev;
-    return { x: t.clientX - rect.left, y: t.clientY - rect.top };
+    const tt = (ev.touches && ev.touches[0]) || ev;
+    return { x: tt.clientX - rect.left, y: tt.clientY - rect.top };
   }
 
   function angleFrom(px, py, ox, oy) {
@@ -168,12 +195,15 @@
   function activeState() { return activeEditor === 'A' ? stateA : stateB; }
   function setActiveState(s) { if (activeEditor === 'A') stateA = s; else stateB = s; }
 
-  function hitTest(pt) {
-    const pts = jointPositions(activeState(), PARAMS).map(toPx);
-    for (let i = pts.length - 1; i >= 0; i--) {
-      if (Math.hypot(pt.x - pts[i].x, pt.y - pts[i].y) < 32) return i;
+  // The bob closest to the finger, within reach.
+  function nearestBob(st, pt) {
+    const pts = jointPositions(st, PARAMS).map(toPx);
+    let best = null, bestD = 32;
+    for (let i = 0; i < pts.length; i++) {
+      const d = Math.hypot(pt.x - pts[i].x, pt.y - pts[i].y);
+      if (d < bestD) { bestD = d; best = i; }
     }
-    return null;
+    return best;
   }
 
   // ============ IDLE HINT (nudge towards Blau after Rot goes quiet) ============
@@ -197,8 +227,16 @@
   function onPointerDown(ev) {
     if (mode !== STATE_SETUP) return;
     const pt = localPoint(ev);
-    const idx = hitTest(pt);
-    if (idx === null) return;
+    // The selected pendulum wins: when Blau lies right on top of Rot, the
+    // finger keeps moving the one being set. Otherwise a touch on the other
+    // pendulum selects it and moves it straight away.
+    let idx = nearestBob(activeState(), pt);
+    if (idx === null) {
+      const other = activeEditor === 'A' ? 'B' : 'A';
+      idx = nearestBob(other === 'A' ? stateA : stateB, pt);
+      if (idx === null) return;
+      setEditor(other, true);
+    }
     ev.preventDefault();
     drag = idx;
     clearIdleHint();
@@ -216,7 +254,7 @@
     s[2 * drag] = angleFrom(pt.x, pt.y, origin.x, origin.y);
     s[2 * drag + 1] = 0;
     setActiveState(s);
-    renderSetup();
+    render();
   }
 
   function onPointerUp() {
@@ -238,42 +276,48 @@
     PARAMS.l = new Array(n).fill(1);
     stateA = zeroState(n);
     stateB = zeroState(n);
-    modeSimpleBtn.classList.toggle('active', n === 1);
-    modeDoubleBtn.classList.toggle('active', n === 2);
-    modeTripleBtn.classList.toggle('active', n === 3);
-    layout();
-    renderSetup();
+    startA = startB = null;
+    modeSelect.value = String(n);
+    layout(true);
+    render();
   }
 
   function selectPendulumType(n) {
-    if (mode !== STATE_SETUP) resetSim();
+    if (mode !== STATE_SETUP) resetSim(true);
     setN(n);
   }
 
-  function setEditor(who) {
+  function setEditor(who, quiet) {
     clearIdleHint();
     activeEditor = who;
     editorABtn.classList.toggle('active', who === 'A');
     editorBBtn.classList.toggle('active', who === 'B');
-    legendA.classList.toggle('editing', who === 'A');
-    legendB.classList.toggle('editing', who === 'B');
-    hint.show(who === 'A' ? t('badge.placeRed') : t('badge.placeBlue'));
-    renderSetup();
+    editorABtn.setAttribute('aria-pressed', String(who === 'A'));
+    editorBBtn.setAttribute('aria-pressed', String(who === 'B'));
+    if (quiet) hint.hide();
+    else hint.show(who === 'A' ? t('badge.placeRed') : t('badge.placeBlue'));
+    render();
   }
 
-  modeSimpleBtn.addEventListener('click', () => { selectPendulumType(1); });
-  modeDoubleBtn.addEventListener('click', () => { selectPendulumType(2); });
-  modeTripleBtn.addEventListener('click', () => { selectPendulumType(3); });
+  modeSelect.addEventListener('change', () => { selectPendulumType(+modeSelect.value); });
   editorABtn.addEventListener('click', () => { if (mode === STATE_SETUP) setEditor('A'); });
   editorBBtn.addEventListener('click', () => { if (mode === STATE_SETUP) setEditor('B'); });
+
+  frictionBtn.addEventListener('click', () => {
+    const on = !PARAMS.friction;
+    PARAMS.friction = on ? FRICTION : 0;
+    frictionBtn.classList.toggle('active', on);
+    frictionBtn.setAttribute('aria-pressed', String(on));
+    hint.show(on ? t('badge.frictionOn') : t('badge.frictionOff'));
+    clearTimeout(frictionBtn._t);
+    frictionBtn._t = setTimeout(() => { hint.hide(); }, 1800);
+  });
 
   // ============ SIM LOOP ============
   const PHYS_DT = 1 / 1000;
   const MAX_SUBSTEPS = 40;
   let running = false;
   let lastT = 0;
-
-  function fmt1(n) { return n.toFixed(1).replace('.', ','); }
 
   function step(now) {
     if (!running) return;
@@ -284,24 +328,17 @@
     for (let i = 0; i < steps; i++) {
       stateA = rk4(stateA, PHYS_DT, PARAMS);
       stateB = rk4(stateB, PHYS_DT, PARAMS);
+      elapsed += PHYS_DT;
+      // checked on every physics step, so the precision task cannot slip
+      // past its limit between two frames
+      trackPrecision();
     }
-    elapsed += steps * PHYS_DT;
 
-    const pa = jointPositions(stateA, PARAMS)[PARAMS.N - 1];
-    const pb = jointPositions(stateB, PARAMS)[PARAMS.N - 1];
-    const pxA = toPx(pa), pxB = toPx(pb);
+    trailA.push(tip(stateA));
+    trailB.push(tip(stateB));
+    if (trailA.length > TRAIL_FRAMES) { trailA.shift(); trailB.shift(); }
 
-    fadeTrail();
-    trailSegment(lastPrevA, pxA, TRAIL_A);
-    trailSegment(lastPrevB, pxB, TRAIL_B);
-    lastPrevA = pxA;
-    lastPrevB = pxB;
-
-    clearDraw();
-    drawPivot();
-    drawPendulum(stateB, COL_B, 1);
-    drawPendulum(stateA, COL_A, 1);
-
+    render();
     roZeit.textContent = t('readout.seconds', fmt1(elapsed));
     checkTasks();
 
@@ -313,9 +350,8 @@
     editorBBtn.disabled = !enabled;
   }
 
-  function setPrimary(label, sub, iconPath, filled) {
-    primaryLabel.textContent = label;
-    primarySub.textContent = sub;
+  function setPrimary(ariaKey, iconPath) {
+    primaryBtn.setAttribute('aria-label', t(ariaKey));
     primaryIcon.innerHTML = iconPath;
   }
 
@@ -325,17 +361,15 @@
   function startSim() {
     mode = STATE_RUN;
     elapsed = 0;
-    lastPrevA = null;
-    lastPrevB = null;
+    clearTrail();
     clearIdleHint();
     roStatus.textContent = t('readout.running');
     roZeit.textContent = t('readout.seconds', '0,0');
     startA = stateA.slice(); startB = stateB.slice();
+    beginPrecisionAttempt();
     hint.hide();
-    legendA.classList.remove('editing');
-    legendB.classList.remove('editing');
     setControlsEnabled(false);
-    setPrimary(t('primary.stop'), t('primary.stopSub'), ICON_PAUSE);
+    setPrimary('primary.pauseAria', ICON_PAUSE);
     running = true;
     lastT = performance.now();
     requestAnimationFrame(step);
@@ -345,34 +379,35 @@
     mode = STATE_PAUSED;
     running = false;
     roStatus.textContent = t('readout.paused');
-    setPrimary(t('primary.resume'), t('primary.resumeSub'), ICON_PLAY);
+    setPrimary('primary.resumeAria', ICON_PLAY);
   }
 
   function resumeSim() {
     mode = STATE_RUN;
     roStatus.textContent = t('readout.running');
-    setPrimary(t('primary.stop'), t('primary.stopSub'), ICON_PAUSE);
+    setPrimary('primary.pauseAria', ICON_PAUSE);
     running = true;
     lastT = performance.now();
     requestAnimationFrame(step);
   }
 
-  function resetSim() {
+  // After a run, Reset brings back the positions of the last Start, so a
+  // near miss can be fine-tuned instead of set up again from scratch. In
+  // the setup, Reset lets both pendulums hang straight down.
+  function resetSim(toRest) {
+    const back = !toRest && mode !== STATE_SETUP && startA;
     running = false;
     mode = STATE_SETUP;
-    stateA = zeroState(PARAMS.N);
-    stateB = zeroState(PARAMS.N);
+    stateA = back ? startA.slice() : zeroState(PARAMS.N);
+    stateB = back ? startB.slice() : zeroState(PARAMS.N);
     elapsed = 0;
-    lastPrevA = null;
-    lastPrevB = null;
+    attempt = null;
     setControlsEnabled(true);
-    setPrimary(t('primary.start'), t('primary.startSub'), ICON_PLAY);
+    setPrimary('primary.startAria', ICON_PLAY);
     roStatus.textContent = t('readout.ready');
     roZeit.textContent = t('readout.seconds', '0,0');
-    setEditor('A');
-    trailCtx.fillStyle = PC.stage;
-    trailCtx.fillRect(0, 0, W, H);
-    renderSetup();
+    clearTrail();
+    setEditor(back ? activeEditor : 'A', back);
   }
 
   primaryBtn.addEventListener('click', () => {
@@ -380,18 +415,25 @@
     else if (mode === STATE_RUN) pauseSim();
     else if (mode === STATE_PAUSED) resumeSim();
   });
-  resetBtn.addEventListener('click', resetSim);
+  resetBtn.addEventListener('click', () => { resetSim(false); });
 
   function relayout() {
-    layout();
-    lastPrevA = null; lastPrevB = null;
-    if (mode === STATE_SETUP) renderSetup();
+    layout(false);
+    render();
   }
 
   // ============ TASKS ============
   // 1: start both pendulums almost identically and watch them separate.
   // 2: with little swing (all arms under 20°), they stay together for 10 s.
-  let startA = null, startB = null;
+  // 3: precision: from a high start (a bob above the pivot), keep the tips
+  //    closer than PRECISION_DIST for PRECISION_TIME. Calibrated on the
+  //    double pendulum: a careful mouse hand (start ~0.3° apart per arm)
+  //    makes it in about one try in four, a finger in about one in ten.
+  const PRECISION_TIME = 4;      // s
+  const PRECISION_DIST = 0.10;   // m
+  let attempt = null;            // { valid, done } for the running Start
+  let bestHeld = 0;              // longest time held under the limit so far
+
   function maxAngleDiff(a, b) {
     let d = 0;
     for (let i = 0; i < PARAMS.N; i++) d = Math.max(d, Math.abs(a[2 * i] - b[2 * i]));
@@ -402,28 +444,54 @@
     for (let i = 0; i < PARAMS.N; i++) m = Math.max(m, Math.abs(st[2 * i]));
     return m;
   }
+  function highStart(st) {
+    return jointPositions(st, PARAMS).some((p) => p.y < 0);
+  }
+
+  function beginPrecisionAttempt() {
+    const valid = PARAMS.N >= 2 && highStart(startA) && maxAngleDiff(startA, startB) > 0 && tipDistance() < PRECISION_DIST;
+    attempt = valid ? { done: false } : null;
+  }
+
+  function trackPrecision() {
+    if (!attempt || attempt.done) return;
+    const held = Math.min(elapsed, PRECISION_TIME);
+    if (tipDistance() >= PRECISION_DIST || elapsed >= PRECISION_TIME) {
+      attempt.done = true;
+      if (held > bestHeld) bestHeld = held;
+      precisionBest.hidden = false;
+      precisionBest.textContent = t('tasks.precisionBest', fmt1(bestHeld));
+      if (elapsed >= PRECISION_TIME) tasks.done('precision');
+    }
+  }
+
   function checkTasks() {
     if (!startA || PARAMS.N < 2) return;
     const deg = Math.PI / 180;
-    const tipA = toPx(jointPositions(stateA, PARAMS)[PARAMS.N - 1]);
-    const tipB = toPx(jointPositions(stateB, PARAMS)[PARAMS.N - 1]);
-    const apart = Math.hypot(tipA.x - tipB.x, tipA.y - tipB.y) > PARAMS.N * SEG_LEN * scale * 0.35;
+    const apart = tipDistance() > PARAMS.N * SEG_LEN * 0.35;
     const nearlySame = maxAngleDiff(startA, startB) < 3 * deg && maxAngleDiff(startA, startB) > 0;
-    if (nearlySame && apart && tasks.done('butterfly')) roStatus.textContent = t('tasks.doneButterfly');
+    if (nearlySame && apart) tasks.done('butterfly');
     const calm = maxSwing(startA) < 20 * deg && maxSwing(startB) < 20 * deg && maxSwing(startA) > 2 * deg;
-    if (calm && elapsed > 10 && !apart && tasks.done('calm')) roStatus.textContent = t('tasks.doneCalm');
+    if (calm && elapsed > 10 && !apart) tasks.done('calm');
   }
 
   // ============ INIT / RESIZE ============
   function init() {
     roZeit.textContent = t('readout.seconds', '0,0');
-    layout();
+    setPrimary('primary.startAria', ICON_PLAY);
+    layout(true);
     setEditor('A');
   }
   window.addEventListener('resize', relayout);
   window.addEventListener('orientationchange', () => {
     setTimeout(relayout, 200);
   });
+  // Back from another tab or app: some phones drop the canvas contents of
+  // a hidden page, so draw the current picture again.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') { lastT = performance.now(); render(); }
+  });
+  window.addEventListener('pageshow', () => { render(); });
 
   init();
 })();
