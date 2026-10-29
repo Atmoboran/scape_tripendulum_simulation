@@ -13,7 +13,9 @@ window.TEXTS.lorenz = {
   loupe: n => 'Lupe ×' + n,
   badge: {
     start: 'Drück Start – oder tipp ins Bild für einen neuen Startpunkt',
-    newStart: 'Neuer Start gesetzt'
+    newStart: 'Neuer Start gesetzt',
+    caught: d => 'Erwischt! Abstand ' + d,
+    missed: d => 'Abstand ' + d + ' – noch zu weit'
   },
   readout: {
     spread: 'Streuung',
@@ -52,6 +54,9 @@ window.TEXTS.lorenz = {
     times: list => 'Getrennt nach: ' + list,
     timeItem: (delta, time) => time + ' (bei ' + delta + ')',
     donePrecise: (a, b) => 'Nein! ' + a + ' statt ' + b + ' Zeiteinheiten – 1000-mal genauer bringt nur ein paar Einheiten mehr. Deshalb kann auch die beste Messung das Wetter nicht wochenlang vorhersagen.',
+    catch: '<b>Für Profis:</b> Warte, bis sich Rot und Blau getrennt haben. Drück dann auf Pause, wenn sie sich zufällig wieder ganz nahe kommen – <b>Abstand unter 2</b>. Das passiert nur selten und dauert kaum einen Augenblick!',
+    catchBest: d => 'Dein knappster Versuch: ' + d,
+    doneCatch: 'Erwischt! Rot und Blau kommen sich immer wieder zufällig nahe – aber nur kurz und nie vorhersagbar. So trifft auch eine Wettervorhersage für in drei Wochen manchmal zufällig zu: Glück, kein Können.',
     ensemble: 'Schalte die Wolke ein, starte und warte, bis sie sich über beide Flügel verteilt hat.',
     doneEnsemble: 'So arbeiten Wetterdienste: Sie rechnen viele leicht verschiedene Starts – ein Ensemble. Je weiter die Wolke streut, desto unsicherer ist die Vorhersage.'
   },

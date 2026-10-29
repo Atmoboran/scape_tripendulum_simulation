@@ -17,9 +17,11 @@ tasks in a pop-up check themselves off — the last one ("keep the tips under
 cloud of 300) start 0.01, 0.000 01 or 0.000 000 01 apart; drag turns the
 picture, a tap sets a new start point (also far off the attractor). A
 loupe in the corner follows Rot, magnified in 1-2-5 steps (up to several
-100 000×) so that the tiny gap to Blau shows and grows. Four tasks:
+100 000×) so that the tiny gap to Blau shows and grows. Five tasks:
 separate wings, a far start lands on the attractor anyway, a 1000× more
-precise start buys only a few time units, the ensemble cloud.
+precise start buys only a few time units, the ensemble cloud, and for
+experts: once apart, pause while the two pass within 2 of each other
+(about 2-3 chances a minute, ~0.3 s each).
 
 ## Run
 

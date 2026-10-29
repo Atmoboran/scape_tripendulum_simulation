@@ -76,6 +76,7 @@
   const tasks = SCAPE.taskDialog('lz-tasks');
   const preciseTimes = document.getElementById('precise-times');
   const preciseFeedback = document.getElementById('precise-feedback');
+  const catchBest = document.getElementById('catch-best');
   const loupe = document.getElementById('loupe');
   const loupeCanvas = document.getElementById('loupe-canvas');
   const loupeCtx = loupeCanvas.getContext('2d');
@@ -296,7 +297,7 @@
   }
 
   // ============ LOOP ============
-  let running = false, lastT = 0;
+  let running = false, lastT = 0, runSince = 0;
   function step(now) {
     if (!running) return;
     const frameDt = Math.min((now - lastT) / 1000, 0.05);
@@ -326,6 +327,7 @@
   function run() {
     mode = STATE_RUN;
     running = true;
+    runSince = performance.now();
     hint.hide();
     roStatus.textContent = t('readout.running');
     setPrimary('lorenz.primary.pauseAria', ICON_PAUSE);
@@ -335,6 +337,7 @@
   function pause() {
     mode = STATE_PAUSED;
     running = false;
+    tryCatch();
     roStatus.textContent = t('readout.paused');
     setPrimary('lorenz.primary.resumeAria', ICON_PLAY);
   }
@@ -406,6 +409,10 @@
   //    more before they separate (about 6 → 14 → 21 units).
   // 3: the cloud spreads over both wings.
   // 4: a start far from the butterfly ends up on it all the same.
+  // 5: once apart, pause while they happen to pass within CATCH of each
+  //    other. In the model that happens about 2-3 times a minute and lasts
+  //    about 0.3 s -- hard, but it can be done. A pause counts only after a
+  //    second of running, so clicking Pause/Weiter in a rush does not.
   const separations = {};   // delta → model time until "apart"
   const deltaLabel = () => deltaSelect.selectedOptions[0].textContent.split(' (')[0];
 
@@ -420,6 +427,20 @@
       preciseFeedback.textContent = t('lorenz.tasks.donePrecise', fmt1(separations[small].time), fmt1(separations[big].time));
       tasks.done('precise');
     }
+  }
+
+  const CATCH = 2;
+  let closest = Infinity;
+  function tryCatch() {
+    if (ensemble || apartAt === null || performance.now() - runSince < 1000) return;
+    const d = dist(a, b);
+    closest = Math.min(closest, d);
+    catchBest.hidden = false;
+    catchBest.textContent = t('lorenz.tasks.catchBest', fmtDist(closest));
+    hint.show(d < CATCH ? t('lorenz.badge.caught', fmtDist(d)) : t('lorenz.badge.missed', fmtDist(d)));
+    clearTimeout(tryCatch.t);
+    tryCatch.t = setTimeout(() => { hint.hide(); }, 2200);
+    if (d < CATCH) tasks.done('catch');
   }
 
   let frameNo = 0;
