@@ -10,6 +10,7 @@ window.TEXTS.lorenz = {
   },
   stageAria: 'Der Lorenz-Attraktor mit zwei Punkten, Rot und Blau. Ziehen dreht das Bild, Tippen setzt einen neuen Start.',
   stageNote: 'Ziehen dreht · Tippen setzt den Start',
+  loupe: n => 'Lupe ×' + n,
   badge: {
     start: 'Drück Start – oder tipp ins Bild für einen neuen Startpunkt',
     newStart: 'Neuer Start gesetzt'
@@ -31,7 +32,8 @@ window.TEXTS.lorenz = {
     note: '<p>Rot und Blau starten fast am selben Punkt – nur um den eingestellten <b>Unterschied</b> verschoben. Die graue Spur im Hintergrund ist der Attraktor: die Form, auf der sich das Modellwetter für immer bewegt. <b>Zeit</b> zählt in Einheiten des Modells, <b>Abstand</b> ist die Entfernung zwischen Rot und Blau.</p>' +
       '<p><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4l14 8-14 8V4z" fill="currentColor" stroke="none"/></svg></span> startet, dann <b>Pause</b> und <b>Weiter</b>. <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg></span> springt zurück zum Startpunkt.</p>' +
       '<p><span class="ico"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="12" r="2.2"/><circle cx="6" cy="9" r="1.6"/><circle cx="17.5" cy="7.5" r="1.6"/><circle cx="8" cy="17" r="1.6"/><circle cx="17" cy="16" r="1.6"/></svg></span> schickt statt zwei Punkten eine <b>Wolke</b> aus 300 fast gleichen Starts los – so wie Wetterdienste viele Vorhersagen auf einmal rechnen. <b>Streuung</b> sagt, wie weit die Wolke auseinandergezogen ist.</p>' +
-      '<p>Im Bild: <b>ziehen</b> dreht den Attraktor, <b>tippen</b> setzt dort einen neuen Startpunkt.</p>'
+      '<p>Im Bild: <b>ziehen</b> dreht den Attraktor, <b>tippen</b> setzt dort einen neuen Startpunkt – gern auch weit weg vom Schmetterling.</p>' +
+      '<p>Die <b>Lupe</b> unten links vergrößert rund um Rot so stark, dass man Blau daneben sieht – am Anfang oft hunderttausendfach. Während die Lücke wächst, zoomt sie heraus und verschwindet, sobald man den Unterschied auch so sieht.</p>'
   },
   delta: {
     label: 'Unterschied am Start',
@@ -44,6 +46,8 @@ window.TEXTS.lorenz = {
   tasks: {
     wings: 'Starte und warte, bis Rot und Blau auf verschiedenen Flügeln kreisen.',
     doneWings: 'Getrennt! Aus einem winzigen Unterschied wurde ein ganz anderes „Wetter“.',
+    attractor: 'Tipp in eine Ecke des Bildes, weit weg vom Schmetterling, und starte. Wo landet der Punkt?',
+    doneAttractor: 'Auf dem Schmetterling! Egal wo das Modellwetter startet – es landet auf derselben Form. Darum heißt sie Attraktor: Sie zieht alles an. Wo genau der Punkt ist, bleibt chaotisch (Wetter); die Form selbst ist berechenbar (Klima).',
     precise: 'Wähle einen 1000-mal kleineren Unterschied am Start und lass beide laufen, bis sie sich trennen. Bleiben sie jetzt 1000-mal länger zusammen?',
     times: list => 'Getrennt nach: ' + list,
     timeItem: (delta, time) => time + ' (bei ' + delta + ')',

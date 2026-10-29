@@ -49,6 +49,7 @@
           <span class="pick" id="legend-a"><i></i><span data-t="labels.red"></span></span>
           <span class="pick" id="legend-b"><i></i><span data-t="labels.blue"></span></span>
         </div>
+        <div class="loupe" id="loupe" aria-hidden="true"><canvas id="loupe-canvas"></canvas><span class="loupe-label" id="loupe-label"></span></div>
         <p class="stage-note" data-t="lorenz.stageNote"></p>
       </div>
     </div>
@@ -103,6 +104,7 @@
     <div id="lz-tasks">
       <ol class="quiz-list">
         <li class="quiz-item" data-task="wings"><p class="quiz-q" data-t="lorenz.tasks.wings"></p><p class="quiz-feedback" data-t="lorenz.tasks.doneWings"></p></li>
+        <li class="quiz-item" data-task="attractor"><p class="quiz-q" data-t="lorenz.tasks.attractor"></p><p class="quiz-feedback" data-t="lorenz.tasks.doneAttractor"></p></li>
         <li class="quiz-item" data-task="precise"><p class="quiz-q" data-t="lorenz.tasks.precise"></p><p class="quiz-best" id="precise-times" hidden></p><p class="quiz-feedback" id="precise-feedback"></p></li>
         <li class="quiz-item" data-task="ensemble"><p class="quiz-q" data-t="lorenz.tasks.ensemble"></p><p class="quiz-feedback" data-t="lorenz.tasks.doneEnsemble"></p></li>
       </ol>

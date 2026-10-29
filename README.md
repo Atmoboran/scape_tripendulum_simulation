@@ -15,8 +15,11 @@ tasks in a pop-up check themselves off — the last one ("keep the tips under
 
 **Chapter 2 (`lorenz.html`)** — the Lorenz attractor: two points (or a
 cloud of 300) start 0.01, 0.000 01 or 0.000 000 01 apart; drag turns the
-picture, a tap sets a new start point. Three tasks: separate wings,
-1000× more precise start buys only a few time units, the ensemble cloud.
+picture, a tap sets a new start point (also far off the attractor). A
+loupe in the corner follows Rot, magnified in 1-2-5 steps (up to several
+100 000×) so that the tiny gap to Blau shows and grows. Four tasks:
+separate wings, a far start lands on the attractor anyway, a 1000× more
+precise start buys only a few time units, the ensemble cloud.
 
 ## Run
 

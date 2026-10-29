@@ -1,6 +1,7 @@
 // Chapter 2: the Lorenz attractor. Two points (Rot, Blau) -- or a cloud of
 // many -- start a tiny distance apart and fly through Lorenz's 1963 weather
-// model. Drag turns the picture, a tap sets a new start point.
+// model. Drag turns the picture, a tap sets a new start point. A loupe in
+// the corner magnifies around Rot so far that Blau shows beside it.
 (() => {
   'use strict';
 
@@ -42,6 +43,17 @@
     return pts;
   })();
   const DEFAULT_START = GHOST[1500];
+  // How far a point is from the attractor, roughly: from the nearest point
+  // of the grey run. On the attractor that stays within a few units.
+  function offAttractor(p) {
+    let best = Infinity;
+    for (let i = 0; i < GHOST.length; i += 2) {
+      const q = GHOST[i], d = (p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2 + (p[2] - q[2]) ** 2;
+      if (d < best) best = d;
+    }
+    return Math.sqrt(best);
+  }
+  const FAR = 10, ON = 3;    // "far from" / "back on" the attractor
 
   // ============ DOM ============
   const stageFrame = document.getElementById('stage-frame');
@@ -64,10 +76,14 @@
   const tasks = SCAPE.taskDialog('lz-tasks');
   const preciseTimes = document.getElementById('precise-times');
   const preciseFeedback = document.getElementById('precise-feedback');
+  const loupe = document.getElementById('loupe');
+  const loupeCanvas = document.getElementById('loupe-canvas');
+  const loupeCtx = loupeCanvas.getContext('2d');
+  const loupeLabel = document.getElementById('loupe-label');
 
   // ============ VIEW (rotation + projection) ============
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  let W = 0, H = 0, S = 1;
+  let W = 0, H = 0, S = 1, LW = 0, LH = 0;
   let yaw = 0, pitch = 0;        // 0/0 = the classic butterfly view (x across, z up)
   const CENTER = [0, 0, 25];
   let R = null;                  // rows: screen-right, screen-up, depth
@@ -98,6 +114,13 @@
     ghostCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
     drawCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
     S = Math.min(W, H) * 0.47 / 27;
+    const hidden = loupe.hidden;   // measured even while it is stepped aside
+    loupe.hidden = false;
+    const lr = loupe.getBoundingClientRect();
+    loupe.hidden = hidden;
+    LW = lr.width; LH = lr.height;
+    loupeCanvas.width = Math.round(LW * dpr); loupeCanvas.height = Math.round(LH * dpr);
+    loupeCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
     drawGhost();
   }
 
@@ -117,7 +140,7 @@
   let start = DEFAULT_START.slice();
   let delta = +deltaSelect.value;
   let ensemble = false;
-  let a, b, trailA, trailB, cloud, elapsed, apartAt;
+  let a, b, trailA, trailB, cloud, elapsed, apartAt, startFar;
 
   function seed() {
     a = start.slice();
@@ -134,6 +157,7 @@
     }
     elapsed = 0;
     apartAt = null;
+    startFar = offAttractor(start) > FAR;
   }
 
   // ============ DRAWING ============
@@ -196,6 +220,56 @@
       dot(a, COL_A, 6);
     }
     roDist.textContent = fmtDist(ensemble ? spread() : dist(a, b));
+    renderLoupe();
+  }
+
+  // ============ LOUPE ============
+  // Centred on Rot (or the middle of the cloud), magnified so that the gap
+  // to Blau (or the cloud's spread) takes about a third of the loupe. The
+  // factor goes in 1-2-5 steps so the label stays readable; once the gap
+  // shows in the big picture anyway, the loupe steps aside.
+  function niceFactor(m) {
+    const e = Math.floor(Math.log10(m)), f = m / Math.pow(10, e);
+    return (f >= 5 ? 5 : f >= 2 ? 2 : 1) * Math.pow(10, e);
+  }
+  // Screen offset of p from the centre c at magnification m -- from the
+  // difference p - c, so tiny gaps keep their digits.
+  function rel(p, c, m) {
+    const x = p[0] - c[0], y = p[1] - c[1], z = p[2] - c[2];
+    return [LW / 2 + m * S * (R[0][0] * x + R[0][1] * y), LH / 2 - m * S * (R[1][0] * x + R[1][1] * y + R[1][2] * z)];
+  }
+  function renderLoupe() {
+    let c, gap;
+    if (ensemble) {
+      c = [0, 0, 0];
+      cloud.forEach((p) => { c[0] += p[0] / CLOUD; c[1] += p[1] / CLOUD; c[2] += p[2] / CLOUD; });
+      gap = spread();
+    } else {
+      c = a; gap = dist(a, b);
+    }
+    const m = niceFactor(Math.max(1, LW * 0.32 / Math.max(gap * S, 1e-12)));
+    loupe.hidden = m < 5;
+    if (loupe.hidden) return;
+    loupeLabel.textContent = t('lorenz.loupe', m.toLocaleString('de-DE').replace(/\./g, '\u202f'));
+    const g = loupeCtx;
+    g.fillStyle = PC.stage;
+    g.fillRect(0, 0, LW, LH);
+    if (ensemble) {
+      cloud.forEach((p, i) => { const q = rel(p, c, m); g.fillStyle = mix(i); g.fillRect(q[0] - 2, q[1] - 2, 4, 4); });
+      return;
+    }
+    // the last stretch of both paths: two lines side by side
+    [[trailB, COL_B], [trailA, COL_A]].forEach(([tr, col]) => {
+      g.strokeStyle = col; g.lineWidth = 2; g.lineCap = 'round';
+      g.beginPath();
+      for (let i = Math.max(0, tr.length - 160); i < tr.length; i++) { const q = rel(tr[i], c, m); if (i === Math.max(0, tr.length - 160)) g.moveTo(q[0], q[1]); else g.lineTo(q[0], q[1]); }
+      g.stroke();
+    });
+    [[b, COL_B], [a, COL_A]].forEach(([p, col]) => {
+      const q = rel(p, c, m);
+      g.beginPath(); g.arc(q[0], q[1], 5, 0, Math.PI * 2);
+      g.fillStyle = col; g.fill(); g.lineWidth = 2; g.strokeStyle = PC.ink; g.stroke();
+    });
   }
 
   // ============ READOUT ============
@@ -308,6 +382,9 @@
     if (!press.moved && e.type === 'pointerup') {
       const rect = stage.getBoundingClientRect();
       start = unproject(e.clientX - rect.left, e.clientY - rect.top);
+      // exactly on the z axis the model has a fixed line into the origin;
+      // nudge off it so every start really flies
+      if (Math.hypot(start[0], start[1]) < 0.01) start[0] = 0.01;
       reset();
       hint.show(t('lorenz.badge.newStart'));
       clearTimeout(release.t);
@@ -323,6 +400,7 @@
   // 2: a 1000 times smaller start difference -- and only a few time units
   //    more before they separate (about 6 → 14 → 21 units).
   // 3: the cloud spreads over both wings.
+  // 4: a start far from the butterfly ends up on it all the same.
   const separations = {};   // delta → model time until "apart"
   const deltaLabel = () => deltaSelect.selectedOptions[0].textContent.split(' (')[0];
 
@@ -339,7 +417,10 @@
     }
   }
 
+  let frameNo = 0;
   function checkTasks() {
+    frameNo++;
+    if (startFar && elapsed > 1 && frameNo % 15 === 0 && offAttractor(ensemble ? cloud[0] : a) < ON) tasks.done('attractor');
     if (!ensemble && Math.sign(a[0]) !== Math.sign(b[0]) && Math.abs(a[0]) > 4 && Math.abs(b[0]) > 4) tasks.done('wings');
     if (ensemble && elapsed > 1) {
       let left = 0;
