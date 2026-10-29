@@ -56,7 +56,7 @@ window.TEXTS.lorenz = {
     donePrecise: (a, b) => 'Nein! ' + a + ' statt ' + b + ' Zeiteinheiten – 1000-mal genauer bringt nur ein paar Einheiten mehr. Deshalb kann auch die beste Messung das Wetter nicht wochenlang vorhersagen.',
     catch: '<b>Für Profis:</b> Warte, bis sich Rot und Blau getrennt haben. Drück dann auf Pause, wenn sie sich zufällig wieder ganz nahe kommen – <b>Abstand unter 2</b>. Das passiert nur selten und dauert kaum einen Augenblick!',
     catchBest: d => 'Dein knappster Versuch: ' + d,
-    doneCatch: 'Erwischt! Rot und Blau kommen sich immer wieder zufällig nahe – aber nur kurz und nie vorhersagbar. So trifft auch eine Wettervorhersage für in drei Wochen manchmal zufällig zu: Glück, kein Können.',
+    doneCatch: 'Erwischt! Rot und Blau kommen sich immer wieder nahe – aber nur kurz, und wann, weiß man vorher nicht. Darum sagen Wetterdienste für die fernere Zukunft keine genauen Tageswerte voraus, sondern Wahrscheinlichkeiten und Trends: Wird es eher wärmer oder kälter, eher nasser oder trockener als üblich?',
     ensemble: 'Schalte die Wolke ein, starte und warte, bis sie sich über beide Flügel verteilt hat.',
     doneEnsemble: 'So arbeiten Wetterdienste: Sie rechnen viele leicht verschiedene Starts – ein Ensemble. Je weiter die Wolke streut, desto unsicherer ist die Vorhersage.'
   },

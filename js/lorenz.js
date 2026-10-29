@@ -297,7 +297,7 @@
   }
 
   // ============ LOOP ============
-  let running = false, lastT = 0, runSince = 0;
+  let running = false, lastT = 0;
   function step(now) {
     if (!running) return;
     const frameDt = Math.min((now - lastT) / 1000, 0.05);
@@ -327,7 +327,6 @@
   function run() {
     mode = STATE_RUN;
     running = true;
-    runSince = performance.now();
     hint.hide();
     roStatus.textContent = t('readout.running');
     setPrimary('lorenz.primary.pauseAria', ICON_PAUSE);
@@ -411,8 +410,8 @@
   // 4: a start far from the butterfly ends up on it all the same.
   // 5: once apart, pause while they happen to pass within CATCH of each
   //    other. In the model that happens about 2-3 times a minute and lasts
-  //    about 0.3 s -- hard, but it can be done. A pause counts only after a
-  //    second of running, so clicking Pause/Weiter in a rush does not.
+  //    about 0.3 s -- hard, but it can be done. Every pause after the split
+  //    counts, rapid Pause/Weiter included.
   const separations = {};   // delta → model time until "apart"
   const deltaLabel = () => deltaSelect.selectedOptions[0].textContent.split(' (')[0];
 
@@ -432,7 +431,7 @@
   const CATCH = 2;
   let closest = Infinity;
   function tryCatch() {
-    if (ensemble || apartAt === null || performance.now() - runSince < 1000) return;
+    if (ensemble || apartAt === null) return;
     const d = dist(a, b);
     closest = Math.min(closest, d);
     catchBest.hidden = false;
