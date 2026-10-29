@@ -50,15 +50,18 @@ folder with any static file server / GitHub Pages, e.g.
 python3 -m http.server 8000      # then http://localhost:8000/
 ```
 
-Offline: served over http(s), a service worker (`sw.js`) keeps every file
-after the first visit, so the app starts without a network (opened from
-disk it needs none anyway). Bump `VERSION` in `sw.js` with every release so
-visitors get the new files.
+Offline: served over http(s), a service worker (`sw.js`) stores every file
+on the first visit, so all chapters start without a network afterwards
+(opened from disk the app needs none anyway). It works network first: with
+a connection each file comes fresh from the server, so updates reach
+visitors without any version bump; only offline (or after 4 s without an
+answer) the stored copy is used. New files of the app must be added to the
+`FILES` list in `sw.js`.
 
 ## Tests and scripts
 
 ```
-node --test tests/*.test.js           # models, numerics, reproducibility;
+node --test --test-concurrency=1 tests/*.test.js   # models, numerics, UI, offline;
                                       # browser + offline tests need Playwright
 node scripts/validate-lorenz96.js     # Lyapunov exponent, convergence, controls
 node scripts/validate-qg.js           # same for the two-layer model (~8 min)
