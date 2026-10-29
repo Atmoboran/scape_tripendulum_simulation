@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Zwei Wetterkarten</title>
+<meta name="description" content="">
+<!-- Structure only. Design: theme/ · texts: content/ · layout: css/ · behaviour: js/ -->
+<script src="js/view.js" data-app="tripendel"></script>
+<link rel="stylesheet" href="theme/theme.css">
+<link rel="stylesheet" href="css/kit.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<header class="top">
+  <span class="logo" data-brand="logo"></span>
+  <div class="top-right">
+    <nav class="nav" data-t-aria="chapters.aria">
+      <a href="index.html"><span class="num">1</span><span data-t="chapters.one"></span></a>
+      <a href="lorenz.html"><span class="num">2</span><span data-t="chapters.two"></span></a>
+      <a href="lorenz96.html"><span class="num">3</span><span data-t="chapters.three"></span></a>
+      <a href="karte.html" aria-current="page"><span class="num">4</span><span data-t="chapters.four"></span></a>
+    </nav>
+    <button type="button" class="view-toggle"></button>
+  </div>
+</header>
+
+<div class="poster small">
+  <div class="f f1"></div><div class="f f2"></div><div class="f f3"></div>
+  <svg class="l2" viewBox="0 0 300 220" aria-hidden="true">
+    <path d="M10,80 C60,30 100,130 150,80 S240,30 290,80" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>
+    <path d="M10,140 C60,90 100,190 150,140 S240,90 290,140" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>
+  </svg>
+  <svg class="l3" viewBox="0 0 400 400" aria-hidden="true"><circle cx="150" cy="200" r="110"/><circle cx="290" cy="170" r="80"/></svg>
+  <div class="poster-text">
+    <h1 class="headline" data-t-html="karte.poster.headline"></h1>
+    <p class="lead" data-t="karte.poster.lead"></p>
+  </div>
+</div>
+
+<main class="page">
+  <div class="lab">
+    <div class="lab-stage">
+      <div class="stage-frame square fit tall-mobile" id="stage-frame">
+        <div id="stage" role="img" data-t-aria="karte.stageAria">
+          <canvas id="draw-canvas"></canvas>
+        </div>
+        <div class="pick-ctl row" role="group" data-t-aria="karte.viewAria">
+          <button type="button" class="pick view-pick" data-view="a" aria-pressed="false"><span data-t="karte.viewA"></span></button>
+          <button type="button" class="pick view-pick" data-view="b" aria-pressed="false"><span data-t="karte.viewB"></span></button>
+          <button type="button" class="pick view-pick" data-view="both" aria-pressed="false"><span data-t="karte.viewBoth"></span></button>
+          <button type="button" class="pick view-pick" data-view="diff" aria-pressed="false"><span data-t="karte.viewDiff"></span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="lab-post">
+      <div class="readout-grid" aria-live="polite">
+        <div><span data-t="readout.status"></span><b id="ro-status" data-t="readout.ready"></b></div>
+        <div><span data-t="readout.time"></span><b id="ro-zeit"></b></div>
+        <div><span class="ro-label"><span data-t="lab.difference"></span><button type="button" class="info" aria-controls="diff-help" data-t-aria="lab.differenceInfoAria"></button></span><b id="ro-diff"></b></div>
+      </div>
+      <div class="info-note" id="diff-help" hidden data-t-html="karte.diffNote"></div>
+
+      <div class="chart-box">
+        <canvas id="diff-chart" role="img" data-t-aria="lab.chartAria"></canvas>
+        <p class="chart-note" id="doubling-note" hidden></p>
+      </div>
+
+      <div class="ctl-row">
+        <button type="button" class="btn icon primary" id="sim-primary" data-t-aria="lab.startAria">
+          <svg id="sim-primary-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 4l14 8-14 8V4z" fill="currentColor" stroke="none"/></svg>
+        </button>
+        <button type="button" class="btn icon" id="sim-reset" data-t-aria="lab.resetAria">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg>
+        </button>
+        <button type="button" class="btn icon" id="sim-new" data-t-aria="lab.newAria">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="4" width="16" height="16"/><circle cx="9" cy="9" r="1.5" fill="currentColor" stroke="none"/><circle cx="15" cy="15" r="1.5" fill="currentColor" stroke="none"/><circle cx="15" cy="9" r="1.5" fill="currentColor" stroke="none"/><circle cx="9" cy="15" r="1.5" fill="currentColor" stroke="none"/></svg>
+        </button>
+        <button type="button" class="info" aria-controls="controls-help" data-t-aria="controls.infoAria"></button>
+      </div>
+
+      <div class="ctl-row">
+        <label class="select-field">
+          <span class="select-label" data-t="karte.delta.label"></span>
+          <select id="delta-select">
+            <option value="0.5" data-t="karte.delta.big" selected></option>
+            <option value="0.005" data-t="karte.delta.small"></option>
+            <option value="0.00005" data-t="karte.delta.tiny"></option>
+            <option value="0" data-t="karte.delta.none"></option>
+          </select>
+        </label>
+        <label class="select-field narrow">
+          <span class="select-label" data-t="lab.speed"></span>
+          <select id="speed-select">
+            <option value="0.5" data-t="lab.slow"></option>
+            <option value="2" data-t="lab.normal" selected></option>
+            <option value="5" data-t="lab.fast"></option>
+          </select>
+        </label>
+      </div>
+      <div class="info-note" id="controls-help" hidden data-t-html="karte.controlsNote"></div>
+
+      <button type="button" class="btn tasks-open" id="tasks-open" aria-haspopup="dialog" aria-controls="tasks-dialog">
+        <span data-t="tasks.open"></span> <span class="quiz-progress" id="tasks-progress"></span>
+      </button>
+    </div>
+  </div>
+
+  <dialog class="quiz-dialog" id="tasks-dialog" aria-labelledby="tasks-title">
+    <div class="quiz-head">
+      <h2 id="tasks-title" data-t="tasks.title"></h2>
+      <button type="button" class="quiz-close" id="tasks-close" data-t-aria="tasks.closeAria">&times;</button>
+    </div>
+    <p class="quiz-intro" data-t="tasks.intro"></p>
+    <div id="karte-tasks">
+      <ol class="quiz-list">
+        <li class="quiz-item" data-task="where"><p class="quiz-q" data-t="karte.tasks.where"></p><p class="quiz-feedback" data-t="karte.tasks.doneWhere"></p></li>
+        <li class="quiz-item" data-task="apart"><p class="quiz-q" data-t="karte.tasks.apart"></p><p class="quiz-feedback" id="apart-feedback"></p></li>
+        <li class="quiz-item" data-task="smaller"><p class="quiz-q" data-t="karte.tasks.smaller"></p><p class="quiz-best" id="smaller-times" hidden></p><p class="quiz-feedback" id="smaller-feedback"></p></li>
+      </ol>
+    </div>
+  </dialog>
+
+  <div class="topics">
+    <details class="topic"><summary data-t="karte.topics.what.title"></summary><div class="topic-body" data-t-html="karte.topics.what.body"></div></details>
+    <details class="topic"><summary data-t="karte.topics.shows.title"></summary><div class="topic-body" data-t-html="karte.topics.shows.body"></div></details>
+    <details class="topic"><summary data-t="karte.topics.weather.title"></summary><div class="topic-body" data-t-html="karte.topics.weather.body"></div></details>
+    <details class="topic"><summary data-t="karte.topics.measure.title"></summary><div class="topic-body" data-t-html="karte.topics.measure.body"></div></details>
+  </div>
+
+  <p class="text more-chaos" data-t-html="moreChaos"></p>
+
+  <div class="next-part back">
+    <a class="btn big" href="lorenz96.html"><span aria-hidden="true">←</span> <span data-t="chapters.backThree"></span></a>
+  </div>
+</main>
+
+<footer class="foot">
+  <p class="brand-line" data-brand="line"></p>
+</footer>
+
+<script src="theme/theme.js"></script>
+<script src="content/texts.de.js"></script>
+<script src="content/karte.de.js"></script>
+<script src="js/texts.js"></script>
+<script src="js/brand.js"></script>
+<script src="js/kit.js"></script>
+<script src="js/tasks-dialog.js"></script>
+<script src="js/models/fft.js"></script>
+<script src="js/models/qg2layer.js"></script>
+<script src="js/models/compare.js"></script>
+<script src="data/qg-start.js"></script>
+<script src="js/chaos-lab.js"></script>
+<script src="js/karte.js"></script>
+<script src="js/offline.js"></script>
+</body>
+</html>

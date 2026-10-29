@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chaos im Ring</title>
+<meta name="description" content="">
+<!-- Structure only. Design: theme/ · texts: content/ · layout: css/ · behaviour: js/ -->
+<script src="js/view.js" data-app="tripendel"></script>
+<link rel="stylesheet" href="theme/theme.css">
+<link rel="stylesheet" href="css/kit.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<header class="top">
+  <span class="logo" data-brand="logo"></span>
+  <div class="top-right">
+    <nav class="nav" data-t-aria="chapters.aria">
+      <a href="index.html"><span class="num">1</span><span data-t="chapters.one"></span></a>
+      <a href="lorenz.html"><span class="num">2</span><span data-t="chapters.two"></span></a>
+      <a href="lorenz96.html" aria-current="page"><span class="num">3</span><span data-t="chapters.three"></span></a>
+      <a href="karte.html"><span class="num">4</span><span data-t="chapters.four"></span></a>
+    </nav>
+    <button type="button" class="view-toggle"></button>
+  </div>
+</header>
+
+<div class="poster small">
+  <div class="f f1"></div><div class="f f2"></div><div class="f f3"></div>
+  <svg class="l2" viewBox="0 0 300 220" aria-hidden="true">
+    <circle cx="150" cy="110" r="70" fill="none" stroke="currentColor" stroke-width="8" stroke-dasharray="2 14" stroke-linecap="round"/>
+    <path d="M150,30 L162,60 L190,52 L184,82 L214,96 L188,112 L206,140 L176,140 L170,172 L150,150 L128,178 L122,146 L92,148 L108,120 L84,100 L114,88 L104,58 L134,64 Z" fill="none" stroke="currentColor" stroke-width="7" stroke-linejoin="round"/>
+  </svg>
+  <svg class="l3" viewBox="0 0 400 400" aria-hidden="true"><circle cx="200" cy="200" r="150"/><circle cx="200" cy="200" r="90"/></svg>
+  <div class="poster-text">
+    <h1 class="headline" data-t-html="l96.poster.headline"></h1>
+    <p class="lead" data-t="l96.poster.lead"></p>
+  </div>
+</div>
+
+<main class="page">
+  <div class="lab">
+    <div class="lab-stage">
+      <div class="stage-frame square fit" id="stage-frame">
+        <div id="stage" role="img" data-t-aria="l96.stageAria">
+          <canvas id="draw-canvas"></canvas>
+        </div>
+        <div class="pick-ctl row" role="group" data-t-aria="l96.viewAria">
+          <button type="button" class="pick view-pick active" data-view="ring" aria-pressed="true"><span data-t="l96.viewRing"></span></button>
+          <button type="button" class="pick view-pick" data-view="time" aria-pressed="false"><span data-t="l96.viewTime"></span></button>
+        </div>
+        <p class="stage-note" data-t="l96.stageNote"></p>
+      </div>
+    </div>
+
+    <div class="lab-post">
+      <div class="readout-grid" aria-live="polite">
+        <div><span data-t="readout.status"></span><b id="ro-status" data-t="readout.ready"></b></div>
+        <div><span data-t="readout.time"></span><b id="ro-zeit"></b></div>
+        <div><span class="ro-label"><span data-t="lab.difference"></span><button type="button" class="info" aria-controls="diff-help" data-t-aria="lab.differenceInfoAria"></button></span><b id="ro-diff"></b></div>
+      </div>
+      <div class="info-note" id="diff-help" hidden data-t-html="l96.diffNote"></div>
+
+      <div class="chart-box">
+        <canvas id="diff-chart" role="img" data-t-aria="lab.chartAria"></canvas>
+        <p class="chart-note" id="doubling-note" hidden></p>
+      </div>
+
+      <div class="ctl-row">
+        <button type="button" class="btn icon primary" id="sim-primary" data-t-aria="lab.startAria">
+          <svg id="sim-primary-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 4l14 8-14 8V4z" fill="currentColor" stroke="none"/></svg>
+        </button>
+        <button type="button" class="btn icon" id="sim-reset" data-t-aria="lab.resetAria">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg>
+        </button>
+        <button type="button" class="btn icon" id="sim-new" data-t-aria="lab.newAria">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="4" width="16" height="16"/><circle cx="9" cy="9" r="1.5" fill="currentColor" stroke="none"/><circle cx="15" cy="15" r="1.5" fill="currentColor" stroke="none"/><circle cx="15" cy="9" r="1.5" fill="currentColor" stroke="none"/><circle cx="9" cy="15" r="1.5" fill="currentColor" stroke="none"/></svg>
+        </button>
+        <button type="button" class="info" aria-controls="controls-help" data-t-aria="controls.infoAria"></button>
+      </div>
+
+      <div class="ctl-row">
+        <label class="select-field">
+          <span class="select-label" data-t="l96.delta.label"></span>
+          <select id="delta-select">
+            <option value="1e-1" data-t="l96.delta.big"></option>
+            <option value="1e-3" data-t="l96.delta.small" selected></option>
+            <option value="1e-5" data-t="l96.delta.tiny"></option>
+            <option value="0" data-t="l96.delta.none"></option>
+          </select>
+        </label>
+        <label class="select-field narrow">
+          <span class="select-label" data-t="lab.speed"></span>
+          <select id="speed-select">
+            <option value="1" data-t="lab.slow"></option>
+            <option value="3" data-t="lab.normal" selected></option>
+            <option value="8" data-t="lab.fast"></option>
+          </select>
+        </label>
+      </div>
+      <div class="info-note" id="controls-help" hidden data-t-html="l96.controlsNote"></div>
+
+      <button type="button" class="btn tasks-open" id="tasks-open" aria-haspopup="dialog" aria-controls="tasks-dialog">
+        <span data-t="tasks.open"></span> <span class="quiz-progress" id="tasks-progress"></span>
+      </button>
+    </div>
+  </div>
+
+  <dialog class="quiz-dialog" id="tasks-dialog" aria-labelledby="tasks-title">
+    <div class="quiz-head">
+      <h2 id="tasks-title" data-t="tasks.title"></h2>
+      <button type="button" class="quiz-close" id="tasks-close" data-t-aria="tasks.closeAria">&times;</button>
+    </div>
+    <p class="quiz-intro" data-t="tasks.intro"></p>
+    <div id="l96-tasks">
+      <ol class="quiz-list">
+        <li class="quiz-item" data-task="apart"><p class="quiz-q" data-t="l96.tasks.apart"></p><p class="quiz-feedback" id="apart-feedback"></p></li>
+        <li class="quiz-item" data-task="smaller"><p class="quiz-q" data-t="l96.tasks.smaller"></p><p class="quiz-best" id="smaller-times" hidden></p><p class="quiz-feedback" id="smaller-feedback"></p></li>
+        <li class="quiz-item" data-task="doubling"><p class="quiz-q" data-t="l96.tasks.doubling"></p><p class="quiz-feedback" id="doubling-feedback"></p></li>
+      </ol>
+    </div>
+  </dialog>
+
+  <div class="topics">
+    <details class="topic"><summary data-t="l96.topics.what.title"></summary><div class="topic-body" data-t-html="l96.topics.what.body"></div></details>
+    <details class="topic"><summary data-t="l96.topics.shows.title"></summary><div class="topic-body" data-t-html="l96.topics.shows.body"></div></details>
+    <details class="topic"><summary data-t="l96.topics.measure.title"></summary><div class="topic-body" data-t-html="l96.topics.measure.body"></div></details>
+  </div>
+
+  <p class="text more-chaos" data-t-html="moreChaos"></p>
+
+  <div class="next-part split">
+    <a class="btn big" href="lorenz.html"><span aria-hidden="true">←</span> <span data-t="chapters.backTwo"></span></a>
+    <a class="btn big primary" href="karte.html"><span data-t="chapters.toFour"></span> <span aria-hidden="true">→</span></a>
+  </div>
+</main>
+
+<footer class="foot">
+  <p class="brand-line" data-brand="line"></p>
+</footer>
+
+<script src="theme/theme.js"></script>
+<script src="content/texts.de.js"></script>
+<script src="content/lorenz96.de.js"></script>
+<script src="js/texts.js"></script>
+<script src="js/brand.js"></script>
+<script src="js/kit.js"></script>
+<script src="js/tasks-dialog.js"></script>
+<script src="js/models/lorenz96.js"></script>
+<script src="js/models/compare.js"></script>
+<script src="js/chaos-lab.js"></script>
+<script src="js/lorenz96.js"></script>
+<script src="js/offline.js"></script>
+</body>
+</html>

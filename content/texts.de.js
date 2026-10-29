@@ -24,8 +24,33 @@ window.TEXTS = {
     aria: 'Kapitel',
     one: 'Pendel',
     two: 'Lorenz',
+    three: 'Ring',
+    four: 'Karte',
     next: 'Kapitel 2: Der Lorenz-Attraktor',
-    prev: 'Kapitel 1: Das Chaos-Pendel'
+    prev: 'Kapitel 1: Das Chaos-Pendel',
+    toThree: 'Kapitel 3: Chaos im Ring',
+    toFour: 'Kapitel 4: Zwei Wetterkarten',
+    backTwo: 'Kapitel 2: Der Lorenz-Attraktor',
+    backThree: 'Kapitel 3: Chaos im Ring'
+  },
+
+  // Shared by the twin experiments of chapters 3 and 4 (js/chaos-lab.js).
+  lab: {
+    startAria: 'Start: beide Läufe rechnen',
+    pauseAria: 'Pause',
+    resumeAria: 'Weiter',
+    resetAria: 'Neustart: beide Läufe wieder vom selben Anfang',
+    newAria: 'Neuer Anfangszustand',
+    speed: 'Tempo',
+    slow: 'Langsam',
+    normal: 'Normal',
+    fast: 'Schnell',
+    days: d => d + ' Tage',
+    chartDays: 'Tage',
+    chartAria: 'Wie der Unterschied zwischen A und B mit der Zeit wächst, logarithmisch',
+    doubling: d => 'Der Unterschied verdoppelt sich etwa alle ' + d + ' Tage.',
+    difference: 'Unterschied',
+    differenceInfoAria: 'Was bedeutet der Unterschied?'
   },
 
   poster: {

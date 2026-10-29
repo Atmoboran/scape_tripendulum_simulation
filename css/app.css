@@ -123,6 +123,7 @@
 #lorenz-stage { cursor: grab; }
 #lorenz-stage.dragging { cursor: grabbing; }
 /* the loupe: bottom left, the hint about dragging and tapping beside it */
+.loupe ~ .stage-note { left: calc(var(--loupe) + 22px); max-width: calc(100% - var(--loupe) - 80px); }
 #stage-frame { --loupe: clamp(110px, 28%, 220px); }
 .loupe {
   position: absolute; left: 10px; bottom: 10px; z-index: 3; pointer-events: none;
@@ -134,7 +135,27 @@
   font-size: 10px; font-weight: var(--fw-medium); letter-spacing: .05em; text-transform: var(--caps); font-variant-numeric: tabular-nums; white-space: nowrap;
 }
 .stage-note {
-  position: absolute; left: calc(var(--loupe) + 22px); bottom: 10px; z-index: 3; pointer-events: none; max-width: calc(100% - var(--loupe) - 80px);
+  position: absolute; left: 10px; bottom: 10px; z-index: 3; pointer-events: none; max-width: calc(100% - 70px);
   font-size: 11px; font-weight: var(--fw-medium); letter-spacing: .05em; text-transform: var(--caps); opacity: .7;
 }
 .topic-body p.formula { font-variant-numeric: tabular-nums; background: var(--stage-bg); border-left: 4px solid var(--line); padding: 8px 12px; line-height: 1.7; }
+
+/* ---- chapters 3 and 4: twin experiments (js/chaos-lab.js) ---- */
+.chart-box { margin: 0 0 12px; }
+.chart-box canvas { display: block; width: 100%; height: 150px; }
+.chart-note { font-size: 13px; font-weight: var(--fw-medium); margin-top: 4px; }
+.select-field.narrow { flex: 0 0 auto; min-width: 7.5em; }
+.pick-ctl.row { flex-direction: row; flex-wrap: wrap; }
+/* the map needs room above it for the legend on a phone */
+:root[data-view="mobile"] #stage-frame.tall-mobile { aspect-ratio: 4 / 5; }
+.pick.view-pick { min-width: 0; padding: 4px 12px; }
+.pick.view-pick.active { --obj: var(--ink); }
+.next-part.split { justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+:root[data-view="mobile"] .next-part.split .btn { flex: 1 1 100%; }
+.map-legend {
+  position: absolute; right: 10px; bottom: 58px; z-index: 3; pointer-events: none;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 3px;
+  font-size: 10px; font-weight: var(--fw-medium); letter-spacing: .05em; text-transform: var(--caps);
+}
+.map-legend .bar { width: 120px; height: 10px; border: 1px solid var(--line); }
+.map-legend .ends { display: flex; justify-content: space-between; width: 120px; }
