@@ -1,9 +1,18 @@
 /* Chaos-Pendel – layout only (theme variables from theme/theme.css,
    shared components from css/kit.css). Both chapters use this file. */
 
-/* Only the stage sits in the left column on desktop, so the height it has
-   to leave free is a thin margin -- the stage gets as big as the screen. */
-:root[data-view="desktop"] { --fit-offset: 64px; }
+/* Desktop: once the poster is scrolled away, the stage fills the screen --
+   the whole left column wide and the whole height under the header. The
+   pendulum and the attractor size themselves from the shorter side and
+   stay centred, so a wide box only gives them room. Scrolling near that
+   point snaps onto it. */
+:root[data-view="desktop"] { scroll-snap-type: y proximity; }
+:root[data-view="desktop"] .page { max-width: none; }
+:root[data-view="desktop"] .lab-stage { scroll-snap-align: start; scroll-margin-top: calc(var(--head-h) + 12px); }
+:root[data-view="desktop"] #stage-frame.fit {
+  width: 100%; height: calc(100svh - var(--head-h) - 24px); min-height: 360px;
+  aspect-ratio: auto; margin: 0;
+}
 
 /* ---- the stage: square, canvases stacked ---- */
 #stage-frame { overflow: hidden; }
