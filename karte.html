@@ -19,8 +19,7 @@
     <nav class="nav" data-t-aria="chapters.aria">
       <a href="index.html"><span class="num">1</span><span data-t="chapters.one"></span></a>
       <a href="lorenz.html"><span class="num">2</span><span data-t="chapters.two"></span></a>
-      <a href="lorenz96.html"><span class="num">3</span><span data-t="chapters.three"></span></a>
-      <a href="karte.html" aria-current="page"><span class="num">4</span><span data-t="chapters.four"></span></a>
+      <a href="karte.html" aria-current="page"><span class="num">3</span><span data-t="chapters.three"></span></a>
     </nav>
     <button type="button" class="view-toggle"></button>
   </div>
@@ -47,9 +46,9 @@
           <canvas id="draw-canvas"></canvas>
         </div>
         <div class="pick-ctl row" role="group" data-t-aria="karte.viewAria">
+          <button type="button" class="pick view-pick" data-view="all" aria-pressed="false"><span data-t="karte.viewAll"></span></button>
           <button type="button" class="pick view-pick" data-view="a" aria-pressed="false"><span data-t="karte.viewA"></span></button>
           <button type="button" class="pick view-pick" data-view="b" aria-pressed="false"><span data-t="karte.viewB"></span></button>
-          <button type="button" class="pick view-pick" data-view="both" aria-pressed="false"><span data-t="karte.viewBoth"></span></button>
           <button type="button" class="pick view-pick" data-view="diff" aria-pressed="false"><span data-t="karte.viewDiff"></span></button>
         </div>
       </div>
@@ -66,6 +65,11 @@
       <div class="chart-box">
         <canvas id="diff-chart" role="img" data-t-aria="lab.chartAria"></canvas>
         <p class="chart-note" id="doubling-note" hidden></p>
+      </div>
+      <div class="chart-box station-box">
+        <div class="chart-head"><span data-t="karte.station.title"></span> <span class="station-key"><i class="key-a"></i><span data-t="karte.viewA"></span> <i class="key-b"></i><span data-t="karte.viewB"></span></span></div>
+        <canvas id="station-chart" role="img" data-t-aria="karte.station.aria"></canvas>
+        <p class="chart-note station-empty" id="station-empty" data-t="karte.station.empty"></p>
       </div>
 
       <div class="ctl-row">
@@ -94,9 +98,9 @@
         <label class="select-field narrow">
           <span class="select-label" data-t="lab.speed"></span>
           <select id="speed-select">
-            <option value="0.5" data-t="lab.slow"></option>
-            <option value="2" data-t="lab.normal" selected></option>
-            <option value="5" data-t="lab.fast"></option>
+            <option value="0.2" data-t="lab.slow"></option>
+            <option value="0.5" data-t="lab.normal" selected></option>
+            <option value="2" data-t="lab.fast"></option>
           </select>
         </label>
       </div>
@@ -118,6 +122,7 @@
       <ol class="quiz-list">
         <li class="quiz-item" data-task="where"><p class="quiz-q" data-t="karte.tasks.where"></p><p class="quiz-feedback" data-t="karte.tasks.doneWhere"></p></li>
         <li class="quiz-item" data-task="apart"><p class="quiz-q" data-t="karte.tasks.apart"></p><p class="quiz-feedback" id="apart-feedback"></p></li>
+        <li class="quiz-item" data-task="station"><p class="quiz-q" data-t="karte.tasks.station"></p><p class="quiz-feedback" id="station-feedback"></p></li>
         <li class="quiz-item" data-task="smaller"><p class="quiz-q" data-t="karte.tasks.smaller"></p><p class="quiz-best" id="smaller-times" hidden></p><p class="quiz-feedback" id="smaller-feedback"></p></li>
       </ol>
     </div>
@@ -133,7 +138,7 @@
   <p class="text more-chaos" data-t-html="moreChaos"></p>
 
   <div class="next-part back">
-    <a class="btn big" href="lorenz96.html"><span aria-hidden="true">←</span> <span data-t="chapters.backThree"></span></a>
+    <a class="btn big" href="lorenz.html"><span aria-hidden="true">←</span> <span data-t="chapters.backTwo"></span></a>
   </div>
 </main>
 

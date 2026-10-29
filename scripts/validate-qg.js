@@ -130,7 +130,7 @@ let clim;
 
 // 5. resolution: 64×64, dt halved, own spin-up
 {
-  const o = { nx: 64, ny: 64, dt: p.dt / 2 };
+  const o = { nx: 2 * p.nx, ny: 2 * p.ny, dt: p.dt / 2 };
   const m = new QG.Model(o);
   const r = rng(20261029);
   m.setQ(new Float64Array(m.n).map(() => 1e-9 * (r() - 0.5)), new Float64Array(m.n));
@@ -138,7 +138,7 @@ let clim;
   let s2 = 0, n = 0;
   for (let d = 0; d < 100; d++) { days(m, 1); const th = m.thickness(); for (let k = 0; k < th.length; k++) { s2 += th[k] * th[k]; n++; } }
   const l = lyapunov(m, 100, 1e-6);
-  log('\nAuflösung 64×64 (dt = ' + o.dt + ' s, eigener Spin-up): RMS-Dicke ' + fmt(Math.sqrt(s2 / n) / clim, 2) + ' × Wert bei 32×32, λ1 = ' + fmt(l, 3) + ' pro Tag, Wind max ' + fmt(umax(m), 0) + ' m/s');
+  log('\nAuflösung ' + o.nx + '×' + o.ny + ' (dt = ' + o.dt + ' s, eigener Spin-up): RMS-Dicke ' + fmt(Math.sqrt(s2 / n) / clim, 2) + ' × Wert bei ' + p.nx + '×' + p.ny + ', λ1 = ' + fmt(l, 3) + ' pro Tag, Wind max ' + fmt(umax(m), 0) + ' m/s');
 }
 
 // 6. reproducibility

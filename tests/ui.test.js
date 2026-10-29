@@ -10,7 +10,7 @@ const url = (page) => 'file://' + path.join(__dirname, '..', page);
 const opts = { skip: chromium ? false : 'playwright not installed' };
 const num = (s) => parseFloat(s.replace(/[^\d,.-]/g, '').replace(',', '.'));
 
-for (const page of ['lorenz96.html', 'karte.html']) {
+for (const page of ['karte.html']) {
   test(page + ': start, pause and restart work; both runs restart identically', opts, async () => {
     const browser = await chromium.launch();
     const p = await browser.newPage({ viewport: { width: 390, height: 844 } });
@@ -56,13 +56,29 @@ test('karte.html: the difference view updates while running', opts, async () => 
   await browser.close();
 });
 
-test('all four chapters load without errors', opts, async () => {
+test('all three chapters load without errors', opts, async () => {
   const browser = await chromium.launch();
   const p = await browser.newPage();
   const errors = [];
   p.on('pageerror', (e) => errors.push(e.message));
   p.on('console', (m) => { if (m.type() === 'warning' && /missing/.test(m.text())) errors.push(m.text()); });
-  for (const page of ['index.html', 'lorenz.html', 'lorenz96.html', 'karte.html']) { await p.goto(url(page)); await p.waitForTimeout(300); }
+  for (const page of ['index.html', 'lorenz.html', 'karte.html']) { await p.goto(url(page)); await p.waitForTimeout(300); }
   assert.deepEqual(errors, []);
+  await browser.close();
+});
+
+test('karte.html: all three maps are the start view; a tap sets a station that records A and B', opts, async () => {
+  const browser = await chromium.launch();
+  const p = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await p.goto(url('karte.html'));
+  assert.equal(await p.locator('.view-pick[data-view="all"]').getAttribute('aria-pressed'), 'true');
+  assert.ok(await p.locator('#station-empty').isVisible());
+  const s = await p.locator('#stage').boundingBox();
+  await p.mouse.click(s.x + s.width / 2, s.y + s.height * 0.35);
+  assert.ok(await p.locator('#station-empty').isHidden(), 'station set');
+  await p.selectOption('#speed-select', '2');
+  await p.click('#sim-primary'); await p.waitForTimeout(1500);
+  const n = await p.evaluate(() => document.getElementById('station-chart').toDataURL().length);
+  assert.ok(n > 2000, 'station chart drawn');
   await browser.close();
 });

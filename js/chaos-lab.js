@@ -1,4 +1,4 @@
-// Shared lab for the twin experiments of chapters 3 and 4: run A and run B
+// Shared lab for the twin experiment of chapter 3: run A and run B
 // (B with a tiny change at the start) are stepped together; this file owns
 // the loop, the buttons, the status line and the chart of how far they
 // drift apart. Each chapter hands in a model adapter:
@@ -33,7 +33,7 @@
     function draw(rec, prev, fit, tMax) {
       if (!W) size();
       ctx.clearRect(0, 0, W, H);
-      const padL = 58, padR = 8, padT = 8, padB = 22;
+      const padL = 72, padR = 8, padT = 8, padB = 22;
       const x = (t) => padL + (W - padL - padR) * t / tMax;
       const y = (e) => padT + (H - padT - padB) * (LOG_MAX - Math.log10(Math.max(e, 1e-12))) / (LOG_MAX - LOG_MIN);
       const ink = css('--ink') || '#000', soft = css('--rule-soft') || '#d9d9d9';
@@ -55,6 +55,13 @@
       for (let d = 0; d <= tMax + 1e-9; d += stepT) ctx.fillText(String(d), x(d), H - padB + 6);
       ctx.textAlign = 'right';
       ctx.fillText(t('lab.chartDays'), padL - 8, H - padB + 6);
+      // what the curve is: the difference between A and B, upright on the left
+      ctx.save();
+      ctx.translate(8, padT + (H - padT - padB) / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText(t('lab.chartY'), 0, 0);
+      ctx.restore();
       const line = (r, color, width) => {
         if (!r || r.t.length < 2) return;
         ctx.strokeStyle = color; ctx.lineWidth = width; ctx.lineJoin = 'round';
@@ -130,6 +137,7 @@
       const last = Math.max(lab.rec.t[lab.rec.t.length - 1] || 0, lab.prev ? lab.prev.t[lab.prev.t.length - 1] : 0);
       const tMax = Math.max(model.chartDays || 20, Math.ceil(last / 10) * 10);
       chart.draw(lab.rec, lab.prev, lab.fit, tMax);
+      if (model.drawCharts) model.drawCharts(tMax);
       if (lab.fit) {
         doublingNote.hidden = false;
         doublingNote.textContent = t('lab.doubling', lab.fmtDays(lab.fit.doubling));
@@ -160,7 +168,8 @@
     let running = false, lastT = 0, carry = 0;
     function loop(now) {
       if (!running) return;
-      const dt = Math.min((now - lastT) / 1000, 0.1);
+      const frameMs = now - lastT;
+      const dt = Math.min(frameMs / 1000, 0.1);
       lastT = now;
       carry += dt * +speedSelect.value * model.stepsPerDay;
       let n = Math.floor(carry);
@@ -171,7 +180,9 @@
       for (let i = 0; i < n; i++) {
         // never let the computation eat the frame: the rest waits (or is
         // dropped) -- slower, but each step is the same as on a fast device
-        if (model.msBudget && i && performance.now() - t0 > model.msBudget) { carry = 0; break; }
+        // when frames are slow (drawing, or the browser putting pixels on
+        // the screen), computing gets up to half of the frame interval
+        if (model.msBudget && i && performance.now() - t0 > Math.max(model.msBudget, drawCost, 0.5 * frameMs)) { carry = 0; break; }
         model.step();
         lab.steps++;
         if (lab.steps % model.sampleEvery === 0) sample();
@@ -215,6 +226,7 @@
     resetBtn.addEventListener('click', lab.restart);
     if (newBtn) newBtn.addEventListener('click', () => { model.newStart(); lab.prev = null; lab.restart(); });
 
+    lab.chart = chart;
     window.addEventListener('resize', () => { chart.size(); frame(); });
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') { lastT = performance.now(); chart.size(); frame(); }

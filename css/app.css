@@ -147,7 +147,8 @@
 .select-field.narrow { flex: 0 0 auto; min-width: 7.5em; }
 .pick-ctl.row { flex-direction: row; flex-wrap: wrap; }
 /* the map needs room above it for the legend on a phone */
-:root[data-view="mobile"] #stage-frame.tall-mobile { aspect-ratio: 4 / 5; }
+:root[data-view="mobile"] #stage-frame.tall-mobile { aspect-ratio: 10 / 19; }
+#stage-frame.tall-mobile .hint-badge { top: auto; bottom: 30px; left: 50%; right: auto; transform: translateX(-50%); max-width: 80%; }
 .pick.view-pick { min-width: 0; padding: 4px 12px; }
 .pick.view-pick.active { --obj: var(--ink); }
 .next-part.split { justify-content: space-between; flex-wrap: wrap; gap: 10px; }
@@ -159,3 +160,12 @@
 }
 .map-legend .bar { width: 120px; height: 10px; border: 1px solid var(--line); }
 .map-legend .ends { display: flex; justify-content: space-between; width: 120px; }
+
+/* chapter 3: the weather station's recording under the difference chart */
+.chart-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 11px; font-weight: var(--fw-medium); letter-spacing: .06em; text-transform: var(--caps); margin-bottom: 4px; }
+.station-key { display: inline-flex; align-items: center; gap: 4px; }
+.station-key i { display: inline-block; width: 16px; height: 3px; margin-left: 6px; }
+.station-key .key-a { background: var(--ink); }
+.station-key .key-b { background: var(--accent); }
+.station-box canvas { height: 120px; }
+.station-box .station-empty { position: relative; margin-top: -76px; height: 72px; text-align: center; font-weight: var(--fw-regular); color: var(--ink-muted); pointer-events: none; }

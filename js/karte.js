@@ -1,23 +1,32 @@
-// Chapter 4: two weather maps from the two-layer model. Map A and map B
-// start from the same equilibrated weather; B has a small warm bubble. The
-// model is js/models/qg2layer.js, loop, buttons and chart js/chaos-lab.js.
+// Chapter 3: two weather maps from the two-layer model. Map A and map B
+// start from the same equilibrated weather; B has a small warm bubble. By
+// default all three maps show at once: A, B and where they differ. A tap
+// sets a weather station that records the temperature at that spot in A and
+// B. The model is js/models/qg2layer.js, loop, buttons and the difference
+// chart js/chaos-lab.js.
 (() => {
   'use strict';
   const QG = window.QG2;
   const FFT = window.FFT;
   const INK = window.THEME.pendulum.ink;
   const PURPLE = window.THEME.palette.purple;
+  const ACCENT = window.THEME.palette.orange;
   const FONT = window.THEME.font;
   const P = QG.DEFAULTS;
+  const NX = P.nx, NY = P.ny, ASPECT = P.L / P.W;   // maps are twice as wide as high
+  const DX = P.L / NX, DY = P.W / NY;
   const RADIUS = 5e5;                 // the warm bubble, metres
-  const UP = 64;                      // display grid (spectral interpolation)
 
   const stage = document.getElementById('stage');
   const canvas = document.getElementById('draw-canvas');
   const ctx = canvas.getContext('2d');
   const deltaSelect = document.getElementById('delta-select');
   const viewBtns = [...document.querySelectorAll('.view-pick')];
+  const stationCanvas = document.getElementById('station-chart');
+  const stationCtx = stationCanvas.getContext('2d');
+  const stationEmpty = document.getElementById('station-empty');
   const tasks = SCAPE.taskDialog('karte-tasks');
+  const hint = SCAPE.badge(document.getElementById('stage-frame'));
   const $ = (id) => document.getElementById(id);
 
   // ============ START STATES ============
@@ -30,22 +39,24 @@
   const SNAPS = window.QG_START.snapshots.map((s) => [decode(s.q1), decode(s.q2)]);
   function rolled(q, sx, sy) {
     const out = new Float64Array(q.length);
-    for (let j = 0; j < P.ny; j++) for (let i = 0; i < P.nx; i++) out[((j + sy) % P.ny) * P.nx + (i + sx) % P.nx] = q[j * P.nx + i];
+    for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++) out[((j + sy) % NY) * NX + (i + sx) % NX] = q[j * NX + i];
     return out;
   }
   let startNo = 0;
   function startState() {
     const [q1, q2] = SNAPS[startNo % SNAPS.length];
-    const sx = (startNo * 11) % P.nx, sy = (startNo * 7) % P.ny;
+    const sx = (startNo * 23) % NX, sy = (startNo * 7) % NY;
     return [rolled(q1, sx, sy), rolled(q2, sx, sy)];
   }
 
   // ============ MODEL ADAPTER ============
   let A, B, delta = +deltaSelect.value;
   let bubble = { x: 0.5 * P.L, y: 0.45 * P.W };
+  let station = null;                 // { x, y } in metres
+  let rec = { t: [], a: [], b: [] };  // station recording
   let cache = { t: -1, e: 0 };
   const model = {
-    stepsPerDay: QG.DAY / P.dt,          // 96 steps of 15 minutes
+    stepsPerDay: QG.DAY / P.dt,       // 96 steps of 15 minutes
     sampleEvery: 6,
     maxStepsPerFrame: 40,
     msBudget: 12,
@@ -56,7 +67,9 @@
       B = A.clone();
       if (delta > 0) B.perturbTemperature(bubble.x, bubble.y, RADIUS, delta / QG.KELVIN);
       cache.t = -1;
-      passed = false;
+      passed = false; stationPassed = false;
+      rec = { t: [], a: [], b: [] };
+      recordStation();
     },
     newStart() { startNo++; },
     step() { A.step(); B.step(); },
@@ -66,52 +79,69 @@
       return cache.e;
     },
     render,
-    onSample: checkTasks
+    onSample(l) { recordStation(); checkTasks(l); },
+    drawCharts: drawStationChart
   };
 
-  // ============ FIELDS FOR THE DISPLAY ============
-  // 32² spectrum → 64² grid by zero padding: smooth maps and contours at the
-  // cost of one transform, the model itself stays at 32².
-  const upR = new Float64Array(UP * UP), upI = new Float64Array(UP * UP);
-  function upsample(re, im) {
-    upR.fill(0); upI.fill(0);
-    const n = P.nx, h = n / 2, s = (UP * UP) / (n * n);
-    for (let j = 0; j < n; j++) {
-      if (j === h) continue;
-      const jj = j < h ? j : UP - (n - j);
-      for (let i = 0; i < n; i++) {
-        if (i === h) continue;
-        const ii = i < h ? i : UP - (n - i);
-        upR[jj * UP + ii] = re[j * n + i] * s; upI[jj * UP + ii] = im[j * n + i] * s;
+  // ============ TEMPERATURE AT ONE PLACE ============
+  // Exact value of the model field at (x, y): the Fourier series summed at
+  // that point (no grid interpolation). Temperature = thickness anomaly plus
+  // the imposed south-north gradient, converted to °C (docs/modelle.md).
+  let phase = null;
+  function setPhase() {
+    phase = { c: new Float64Array(NX * NY), s: new Float64Array(NX * NY) };
+    for (let j = 0; j < NY; j++) {
+      const l = (j < NY / 2 ? j : j - NY) * 2 * Math.PI / P.W;
+      for (let i = 0; i < NX; i++) {
+        const k = (i < NX / 2 ? i : i - NX) * 2 * Math.PI / P.L;
+        const a = k * station.x + l * station.y;
+        phase.c[j * NX + i] = Math.cos(a); phase.s[j * NX + i] = Math.sin(a);
       }
     }
-    FFT.fft2(upR, upI, UP, UP, true);
-    return Float64Array.from(upR);
   }
-  // temperature anomaly field (K) and upper-layer flow of one model, into
-  // reused buffers (one set per map)
-  const tr = new Float64Array(P.nx * P.ny), ti = new Float64Array(P.nx * P.ny);
-  const bufs = [0, 1].map(() => ({ T: new Float64Array(UP * UP), S: new Float64Array(UP * UP) }));
+  function temperatureAt(m) {
+    m.invert();
+    let v = 0;
+    for (let k = 0; k < m.n; k++) v += (m.p1r[k] - m.p2r[k]) * phase.c[k] - (m.p1i[k] - m.p2i[k]) * phase.s[k];
+    v /= m.n;
+    return QG.KELVIN * (v - (P.U1 - P.U2) * (station.y - P.W / 2));
+  }
+  function recordStation() {
+    if (!station) return;
+    rec.t.push(model.day()); rec.a.push(temperatureAt(A)); rec.b.push(temperatureAt(B));
+  }
+
+  // ============ FIELDS FOR THE DISPLAY ============
+  // Temperature (°C) and upper-level flow of one run on the model grid,
+  // cached per model time: the three maps share them.
+  const tr = new Float64Array(NX * NY), ti = new Float64Array(NX * NY);
+  const bufs = [0, 1].map(() => ({ t: -1, T: new Float64Array(NX * NY), S: new Float64Array(NX * NY) }));
   function fields(m, slot) {
+    const f = bufs[slot];
+    if (f.t === m.t && f.m === m) return f;
     m.invert();
     for (let k = 0; k < m.n; k++) { tr[k] = m.p1r[k] - m.p2r[k]; ti[k] = m.p1i[k] - m.p2i[k]; }
-    const { T, S } = bufs[slot];
-    const th = upsample(tr, ti);
-    for (let j = 0; j < UP; j++) {
-      const y = (j + 0.5) / UP * P.W - P.W / 2;
+    FFT.fft2(tr, ti, NX, NY, true);
+    for (let j = 0; j < NY; j++) {
+      const y = j * DY - P.W / 2;
       // thickness of the imposed shear is −(U1 − U2)·y: warm south, cold north
-      for (let i = 0; i < UP; i++) { const k = j * UP + i; T[k] = QG.KELVIN * (th[k] - (P.U1 - P.U2) * y); }
+      for (let i = 0; i < NX; i++) f.T[j * NX + i] = QG.KELVIN * (tr[j * NX + i] - (P.U1 - P.U2) * y);
     }
-    const psi = upsample(m.p1r, m.p1i);
-    for (let j = 0; j < UP; j++) {
-      const y = (j + 0.5) / UP * P.W - P.W / 2;
-      for (let i = 0; i < UP; i++) { const k = j * UP + i; S[k] = psi[k] - P.U1 * y; }
+    tr.set(m.p1r); ti.set(m.p1i);
+    FFT.fft2(tr, ti, NX, NY, true);
+    for (let j = 0; j < NY; j++) {
+      const y = j * DY - P.W / 2;
+      for (let i = 0; i < NX; i++) f.S[j * NX + i] = tr[j * NX + i] - P.U1 * y;
     }
-    return bufs[slot];
+    f.seg = segments(f.S);
+    f.t = m.t; f.m = m;
+    return f;
   }
 
   // ============ DRAWING ============
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  // soft colour fields: 1.5 device pixels per CSS pixel are plenty and save
+  // a lot of rasterising on phones with 3× screens
+  const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
   let W = 0, H = 0;
   function layout() {
     const r = stage.getBoundingClientRect();
@@ -121,147 +151,233 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
   const off = document.createElement('canvas');
-  off.width = UP; off.height = UP;
+  off.width = NX; off.height = NY;
   const offCtx = off.getContext('2d');
-  const img = offCtx.createImageData(UP, UP);
+  const img = offCtx.createImageData(NX, NY);
   const hexRgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
   const purple = hexRgb(PURPLE);
   // colour tables, 256 steps each: temperature −25 … +25 °C, difference
   // 0.001 … 10 °C on a log scale
   const LUT_T = new Uint8Array(256 * 3), LUT_D = new Uint8Array(256 * 3);
   for (let k = 0; k < 256; k++) {
-    const c = window.THEME.tempColor(k / 255).match(/\d+/g).map(Number);
-    LUT_T.set(c, 3 * k);
-    const f = k / 255;
-    LUT_D.set([0, 1, 2].map((m) => Math.round(255 + (purple[m] - 255) * f)), 3 * k);
+    LUT_T.set(window.THEME.tempColor(k / 255).match(/\d+/g).map(Number), 3 * k);
+    LUT_D.set([0, 1, 2].map((m) => Math.round(255 + (purple[m] - 255) * k / 255)), 3 * k);
   }
   const idxT = (v) => Math.max(0, Math.min(255, Math.round((v + 25) / 50 * 255)));
   const idxD = (d) => Math.max(0, Math.min(255, Math.round((Math.log10(Math.max(d, 1e-9)) + 3) / 4 * 255)));
 
-  // Paint a 64² field into a square on the stage; row 0 (south) at the bottom.
-  function paint(x0, y0, size, lut, index) {
+  // A map is a rectangle w × h on the stage. Grid point (i, j) sits at the
+  // centre of its cell; north is up.
+  const toScreen = (m, x, y) => [m.x0 + (x / DX + 0.5) * m.w / NX, m.y0 + m.h - (y / DY + 0.5) * m.h / NY];
+  const toModel = (m, px, py) => [((px - m.x0) / m.w * NX - 0.5) * DX, ((m.y0 + m.h - py) / m.h * NY - 0.5) * DY];
+
+  function paint(m, lut, index) {
     const d = img.data;
-    for (let j = 0; j < UP; j++) {
-      const row = (UP - 1 - j) * UP;
-      for (let i = 0; i < UP; i++) {
-        const c = 3 * index(j * UP + i), o = (row + i) * 4;
+    for (let j = 0; j < NY; j++) {
+      const row = (NY - 1 - j) * NX;
+      for (let i = 0; i < NX; i++) {
+        const c = 3 * index(j * NX + i), o = (row + i) * 4;
         d[o] = lut[c]; d[o + 1] = lut[c + 1]; d[o + 2] = lut[c + 2]; d[o + 3] = 255;
       }
     }
     offCtx.putImageData(img, 0, 0);
     ctx.imageSmoothingEnabled = true;
-    ctx.drawImage(off, x0, y0, size, size);
+    ctx.drawImage(off, m.x0, m.y0, m.w, m.h);
   }
-  // Isolines of the flow (marching squares, periodic east-west), one path.
-  function contours(x0, y0, size, S) {
+  // Isolines of the flow (marching squares, periodic east-west), worked out
+  // once per model state in grid units and only scaled when drawn.
+  function segments(S) {
     let lo = Infinity, hi = -Infinity;
     for (let k = 0; k < S.length; k++) { if (S[k] < lo) lo = S[k]; if (S[k] > hi) hi = S[k]; }
-    const step = P.U1 * P.W / 9, cell = size / UP;
-    const X = (i) => x0 + (i + 0.5) * cell, Y = (j) => y0 + size - (j + 0.5) * cell;
-    ctx.save();
-    ctx.beginPath(); ctx.rect(x0, y0, size, size); ctx.clip();
-    ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.lineWidth = 1.2;
-    ctx.beginPath();
+    const step = P.U1 * P.W / 9, out = [];
     const first = Math.ceil(lo / step) * step;
-    for (let j = 0; j < UP - 1; j++) for (let i = 0; i < UP; i++) {
-      const i1 = (i + 1) % UP;
-      const a = S[j * UP + i], b = S[j * UP + i1], c = S[(j + 1) * UP + i1], d = S[(j + 1) * UP + i];
+    for (let j = 0; j < NY - 1; j++) for (let i = 0; i < NX; i++) {
+      const i1 = (i + 1) % NX;
+      const a = S[j * NX + i], b = S[j * NX + i1], c = S[(j + 1) * NX + i1], d = S[(j + 1) * NX + i];
       const mn = Math.min(a, b, c, d), mx = Math.max(a, b, c, d);
       for (let level = Math.max(first, Math.ceil(mn / step) * step); level <= mx; level += step) {
         // crossings on the four edges, in order: bottom, right, top, left
         let n = 0, ax = 0, ay = 0;
         const edge = (p, q, px, py, qx, qy) => {
           if ((p < level) === (q < level)) return;
-          const f = (level - p) / (q - p), ex = X(px + f * (qx - px)), ey = Y(py + f * (qy - py));
-          if (n % 2 === 0) { ax = ex; ay = ey; } else { ctx.moveTo(ax, ay); ctx.lineTo(ex, ey); }
+          const f = (level - p) / (q - p), ex = px + f * (qx - px), ey = py + f * (qy - py);
+          if (n % 2 === 0) { ax = ex; ay = ey; } else out.push(ax, ay, ex, ey);
           n++;
         };
         edge(a, b, i, j, i + 1, j); edge(b, c, i + 1, j, i + 1, j + 1);
         edge(c, d, i + 1, j + 1, i, j + 1); edge(d, a, i, j + 1, i, j);
       }
     }
+    return Float32Array.from(out);
+  }
+  function contours(m, seg) {
+    const cw = m.w / NX, ch = m.h / NY, x0 = m.x0 + 0.5 * cw, y0 = m.y0 + m.h - 0.5 * ch;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(m.x0, m.y0, m.w, m.h); ctx.clip();
+    ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    for (let k = 0; k < seg.length; k += 4) {
+      ctx.moveTo(x0 + seg[k] * cw, y0 - seg[k + 1] * ch);
+      ctx.lineTo(x0 + seg[k + 2] * cw, y0 - seg[k + 3] * ch);
+    }
     ctx.stroke();
     ctx.restore();
   }
 
-  function drawMap(x0, y0, size, kind, label, mode) {
-    if (kind === 'diff') {
-      const fa = fields(A, 0), fb = fields(B, 1);
-      paint(x0, y0, size, LUT_D, (k) => idxD(Math.abs(fa.T[k] - fb.T[k])));
-      contours(x0, y0, size, fa.S);
+  const fmt1 = (v) => v.toFixed(1).replace('.', ',').replace('-', '−');
+  function drawMap(m, mode) {
+    const fa = fields(A, 0), fb = fields(B, 1);
+    if (m.kind === 'diff') {
+      paint(m, LUT_D, (k) => idxD(Math.abs(fa.T[k] - fb.T[k])));
+      contours(m, fa.seg);
     } else {
-      const f = fields(kind === 'a' ? A : B, kind === 'a' ? 0 : 1);
-      paint(x0, y0, size, LUT_T, (k) => idxT(f.T[k]));
-      contours(x0, y0, size, f.S);
+      const f = m.kind === 'a' ? fa : fb;
+      paint(m, LUT_T, (k) => idxT(f.T[k]));
+      contours(m, f.seg);
     }
-    ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.strokeRect(x0, y0, size, size);
+    ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.strokeRect(m.x0, m.y0, m.w, m.h);
     ctx.fillStyle = INK; ctx.font = '500 11px ' + FONT; ctx.textBaseline = 'bottom'; ctx.textAlign = 'left';
-    ctx.fillText(label, x0, y0 - 4);
+    ctx.fillText(t(m.kind === 'a' ? 'karte.mapA' : m.kind === 'b' ? 'karte.mapB' : 'karte.mapDiff'), m.x0, m.y0 - 3);
+    // north is up: a small mark in the top right corner of each map
+    ctx.textAlign = 'right';
+    ctx.fillText(t('karte.northMark'), m.x0 + m.w, m.y0 - 3);
     // the bubble before the start (in B and the difference)
-    if (mode === 'setup' && kind !== 'a' && delta > 0) {
-      const bx = x0 + bubble.x / P.L * size, by = y0 + size - bubble.y / P.W * size, r = RADIUS / P.L * size;
-      ctx.setLineDash([4, 4]); ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(bx, by, r, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+    if (mode === 'setup' && m.kind !== 'a' && delta > 0) {
+      const [bx, by] = toScreen(m, bubble.x, bubble.y), r = RADIUS / P.L * m.w;
+      ctx.strokeStyle = INK; ctx.setLineDash([4, 4]); ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(bx, by, Math.max(r, 8), 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
       ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-      ctx.fillText(t('karte.bubble', t('karte.delta.values')[String(delta)] || String(delta)), bx, by - r - 3);
+      ctx.fillText(t('karte.bubble', t('karte.delta.values')[String(delta)] || String(delta)), bx, by - Math.max(r, 8) - 3);
     }
-    maps.push({ x0, y0, size });
+    // the weather station: a pin, with the reading in A and B
+    if (station) {
+      const [sx, sy] = toScreen(m, station.x, station.y);
+      ctx.fillStyle = INK; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx - 6, sy - 12); ctx.lineTo(sx + 6, sy - 12); ctx.closePath(); ctx.fill(); ctx.stroke();
+      if (m.kind !== 'diff' && rec.t.length) {
+        const v = m.kind === 'a' ? rec.a[rec.a.length - 1] : rec.b[rec.b.length - 1];
+        const label = t('karte.stationValue', fmt1(v));
+        ctx.font = '500 11px ' + FONT;
+        const w = ctx.measureText(label).width + 8;
+        const lx = Math.min(Math.max(sx - w / 2, m.x0 + 2), m.x0 + m.w - w - 2), ly = Math.max(sy - 32, m.y0 + 2);
+        ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.fillRect(lx, ly, w, 17);
+        ctx.fillStyle = m.kind === 'a' ? INK : ACCENT; ctx.fillRect(lx, ly + 15, w, 2);
+        ctx.fillStyle = INK; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        ctx.fillText(label, lx + 4, ly + 8.5);
+      }
+    }
   }
 
-  let view = null, maps = [];
+  // Where the maps go: for "all", whichever arrangement makes them largest
+  // -- three in a column (phone), three in a row, or A and B side by side
+  // with the difference below.
+  const LABEL = 16, GAP = 10;
+  function arrange(kinds, x0, y0, w, h) {
+    if (kinds.length === 1) {
+      const mw = Math.min(w, h * ASPECT);
+      return [{ kind: kinds[0], x0: x0 + (w - mw) / 2, y0, w: mw, h: mw / ASPECT }];
+    }
+    const options = [
+      { cols: 1, rows: 3 }, { cols: 3, rows: 1 }, { cols: 2, rows: 2 }
+    ].map((o) => {
+      const mw = Math.min((w - (o.cols - 1) * GAP) / o.cols, ((h - o.rows * LABEL - (o.rows - 1) * GAP) / o.rows) * ASPECT);
+      return Object.assign(o, { mw });
+    });
+    const best = options.reduce((a, b) => (b.mw > a.mw ? b : a));
+    const mw = best.mw, mh = mw / ASPECT;
+    const totalW = best.cols * mw + (best.cols - 1) * GAP;
+    const rows = best.cols === 3 ? 1 : best.cols === 2 ? 2 : 3;
+    y0 += Math.max(0, (h - rows * (mh + LABEL) - (rows - 1) * GAP) / 2);   // centred in the height
+    return kinds.map((kind, k) => {
+      let col = k % best.cols, row = Math.floor(k / best.cols);
+      let left = x0 + (w - totalW) / 2;
+      if (best.cols === 2 && k === 2) { col = 0; left = x0 + (w - mw) / 2; }   // the difference centred below
+      return { kind, x0: left + col * (mw + GAP), y0: y0 + row * (mh + LABEL + GAP), w: mw, h: mh };
+    });
+  }
+
+  let view = 'all', maps = [];
   function render(mode) {
     layout();
     ctx.clearRect(0, 0, W, H);
-    maps = [];
     // narrow stages put the colour scale in its own row under the buttons
     const narrow = W < 560;
-    const top = narrow ? 104 : 64, side = 14, bottom = 34;
-    const availW = W - 2 * side, availH = H - top - bottom;
-    ctx.font = '500 10px ' + FONT;
-    if (view === 'both') {
-      if (availW >= availH) {
-        const s = Math.min((availW - 16) / 2, availH);
-        const x = (W - 2 * s - 16) / 2;
-        drawMap(x, top, s, 'a', t('karte.mapA'), mode);
-        drawMap(x + s + 16, top, s, 'b', t('karte.mapB'), mode);
-      } else {
-        const s = Math.min(availW, (availH - 20) / 2);
-        const x = (W - s) / 2;
-        drawMap(x, top, s, 'a', t('karte.mapA'), mode);
-        drawMap(x, top + s + 20, s, 'b', t('karte.mapB'), mode);
-      }
-    } else {
-      const s = Math.min(availW, availH), x = (W - s) / 2;
-      drawMap(x, top, s, view, t(view === 'a' ? 'karte.mapA' : view === 'b' ? 'karte.mapB' : 'karte.mapDiff'), mode);
-    }
-    // north / south and scale under the last map
-    const m = maps[maps.length - 1];
-    ctx.fillStyle = INK; ctx.font = '500 10px ' + FONT; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
-    ctx.fillText(t('karte.north'), maps[0].x0 + maps[0].size, maps[0].y0 - 4);
-    ctx.textBaseline = 'top'; ctx.textAlign = 'center';
-    ctx.fillText(t('karte.south'), m.x0 + m.size / 2, m.y0 + m.size + 4);
-    const km = 1e6 / P.L * m.size;
-    ctx.fillRect(m.x0, m.y0 + m.size + 8, km, 3);
+    const top = (narrow ? 104 : 60) + LABEL, side = 12, bottom = 32;
+    const kinds = view === 'all' ? ['a', 'b', 'diff'] : [view];
+    maps = arrange(kinds, side, top, W - 2 * side, H - top - bottom);
+    maps.forEach((m) => drawMap(m, mode));
+    // the scale bar under the lowest map
+    const last = maps.reduce((a, b) => (b.y0 + b.h > a.y0 + a.h ? b : a));
+    ctx.fillStyle = INK; ctx.font = '500 10px ' + FONT; ctx.textBaseline = 'top';
+    const km = 1e6 / P.L * last.w;
+    ctx.fillRect(last.x0, last.y0 + last.h + 8, km, 3);
     ctx.textAlign = 'left';
-    ctx.fillText(t('karte.km'), m.x0 + km + 6, m.y0 + m.size + 4);
+    ctx.fillText(t('karte.km'), last.x0 + km + 6, last.y0 + last.h + 4);
     legend(narrow);
   }
   function legend(narrow) {
-    // colour scale, top right (narrow: under the view buttons)
-    const diff = view === 'diff', w = Math.min(130, W * 0.36), x = W - w - 14, y = narrow ? 66 : 20;
-    const g = ctx.createLinearGradient(x, 0, x + w, 0);
-    for (let k = 0; k <= 10; k++) {
-      const f = k / 10;
-      g.addColorStop(f, diff ? 'rgb(' + [0, 1, 2].map((c) => Math.round(255 + (purple[c] - 255) * f)).join(',') + ')' : window.THEME.tempColor(f * 0.8 + 0.1));
+    const diffOnly = view === 'diff';
+    const bars = view === 'all' ? ['temp', 'diff'] : [diffOnly ? 'diff' : 'temp'];
+    const w = Math.min(120, (W - 40) * (narrow ? 0.45 : 0.22));
+    bars.forEach((kind, k) => {
+      const x = narrow ? 14 + k * (w + 24) : W - (bars.length - k) * (w + 18), y = narrow ? 70 : 20;
+      const g = ctx.createLinearGradient(x, 0, x + w, 0);
+      for (let s = 0; s <= 10; s++) {
+        const f = s / 10;
+        g.addColorStop(f, kind === 'diff' ? 'rgb(' + [0, 1, 2].map((c) => Math.round(255 + (purple[c] - 255) * f)).join(',') + ')' : window.THEME.tempColor(f * 0.8 + 0.1));
+      }
+      ctx.fillStyle = g; ctx.fillRect(x, y, w, 8);
+      ctx.strokeStyle = INK; ctx.lineWidth = 1; ctx.strokeRect(x, y, w, 8);
+      ctx.fillStyle = INK; ctx.font = '500 10px ' + FONT; ctx.textBaseline = 'top';
+      const ends = t(kind === 'diff' ? 'karte.legendDiffEnds' : 'karte.legendTempEnds');
+      ctx.textAlign = 'left'; ctx.fillText(ends[0], x, y + 11);
+      ctx.textAlign = 'right'; ctx.fillText(ends[1], x + w, y + 11);
+      ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      ctx.fillText(t(kind === 'diff' ? 'karte.legendDiff' : 'karte.legendTemp'), x + w / 2, y - 2);
+    });
+  }
+
+  // ============ STATION CHART ============
+  const sdpr = dpr;
+  function drawStationChart(tMax) {
+    const r = stationCanvas.getBoundingClientRect();
+    const w = r.width, h = r.height;
+    if (stationCanvas.width !== Math.round(w * sdpr)) { stationCanvas.width = Math.round(w * sdpr); stationCanvas.height = Math.round(h * sdpr); }
+    const g = stationCtx;
+    g.setTransform(sdpr, 0, 0, sdpr, 0, 0);
+    g.clearRect(0, 0, w, h);
+    stationEmpty.hidden = !!station;
+    const padL = 72, padR = 8, padT = 6, padB = 20;
+    g.font = '500 10px ' + FONT; g.fillStyle = INK;
+    // axes
+    let lo = Infinity, hi = -Infinity;
+    for (let k = 0; k < rec.t.length; k++) { lo = Math.min(lo, rec.a[k], rec.b[k]); hi = Math.max(hi, rec.a[k], rec.b[k]); }
+    if (!(hi > lo)) { lo = (isFinite(lo) ? lo : 0) - 5; hi = lo + 10; }
+    const pad = Math.max(2, (hi - lo) * 0.1);
+    lo = Math.floor((lo - pad) / 5) * 5; hi = Math.ceil((hi + pad) / 5) * 5;
+    const x = (d) => padL + (w - padL - padR) * d / tMax, y = (v) => padT + (h - padT - padB) * (hi - v) / (hi - lo);
+    g.strokeStyle = 'rgba(0,0,0,.12)'; g.lineWidth = 1; g.textAlign = 'right'; g.textBaseline = 'middle';
+    const step = hi - lo > 30 ? 10 : 5;
+    for (let v = lo; v <= hi; v += step) {
+      g.beginPath(); g.moveTo(padL, y(v)); g.lineTo(w - padR, y(v)); g.stroke();
+      g.fillText(fmt1(v).replace(',0', '') + ' °C', padL - 6, y(v));
     }
-    ctx.fillStyle = g; ctx.fillRect(x, y, w, 9);
-    ctx.strokeStyle = INK; ctx.lineWidth = 1; ctx.strokeRect(x, y, w, 9);
-    ctx.fillStyle = INK; ctx.font = '500 10px ' + FONT; ctx.textBaseline = 'top';
-    const ends = t(diff ? 'karte.legendDiffEnds' : 'karte.legendTempEnds');
-    ctx.textAlign = 'left'; ctx.fillText(ends[0], x, y + 12);
-    ctx.textAlign = 'right'; ctx.fillText(ends[1], x + w, y + 12);
-    ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-    ctx.fillText(t(diff ? 'karte.legendDiff' : 'karte.legendTemp'), x + w / 2, y - 2);
+    g.textAlign = 'center'; g.textBaseline = 'top';
+    const st = tMax > 60 ? 20 : tMax > 30 ? 10 : 5;
+    for (let d = 0; d <= tMax + 1e-9; d += st) g.fillText(String(d), x(d), h - padB + 5);
+    g.textAlign = 'right';
+    g.fillText(t('lab.chartDays'), padL - 8, h - padB + 5);
+    g.save(); g.translate(8, padT + (h - padT - padB) / 2); g.rotate(-Math.PI / 2);
+    g.textAlign = 'center'; g.textBaseline = 'top'; g.fillText(t('karte.legendTemp'), 0, 0); g.restore();
+    const line = (vals, col, width) => {
+      if (rec.t.length < 2) return;
+      g.strokeStyle = col; g.lineWidth = width; g.lineJoin = 'round';
+      g.beginPath();
+      for (let k = 0; k < rec.t.length; k++) { const px = x(Math.min(rec.t[k], tMax)), py = y(vals[k]); if (k) g.lineTo(px, py); else g.moveTo(px, py); }
+      g.stroke();
+    };
+    line(rec.b, ACCENT, 2.4);
+    line(rec.a, INK, 1.6);
   }
 
   // ============ INTERACTION ============
@@ -273,24 +389,64 @@
   }
   viewBtns.forEach((btn) => btn.addEventListener('click', () => setView(btn.dataset.view)));
   deltaSelect.addEventListener('change', () => { delta = +deltaSelect.value; lab.restart(); });
-  // a tap on a map moves the bubble (only before the start)
-  stage.addEventListener('pointerup', (e) => {
-    if (lab.mode !== 'setup') return;
-    const r = stage.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
-    const m = maps.find((mm) => x >= mm.x0 && x <= mm.x0 + mm.size && y >= mm.y0 && y <= mm.y0 + mm.size);
+
+  // Drag the bubble (before the start) or tap anywhere on a map for a
+  // weather station.
+  let press = null;
+  const local = (e) => { const r = stage.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+  const mapAt = (x, y) => maps.find((m) => x >= m.x0 && x <= m.x0 + m.w && y >= m.y0 && y <= m.y0 + m.h);
+  stage.addEventListener('pointerdown', (e) => {
+    const [x, y] = local(e), m = mapAt(x, y);
     if (!m) return;
-    bubble = { x: (x - m.x0) / m.size * P.L, y: (1 - (y - m.y0) / m.size) * P.W };
-    lab.restart();
+    let onBubble = false;
+    if (lab.mode === 'setup' && delta > 0 && m.kind !== 'a') {
+      const [bx, by] = toScreen(m, bubble.x, bubble.y);
+      onBubble = Math.hypot(x - bx, y - by) < Math.max(RADIUS / P.L * m.w, 8) + 14;
+    }
+    press = { x, y, m, onBubble, moved: false };
+    if (onBubble) { stage.setPointerCapture(e.pointerId); e.preventDefault(); }
+  });
+  stage.addEventListener('pointermove', (e) => {
+    if (!press || !press.onBubble) return;
+    const [x, y] = local(e);
+    if (Math.hypot(x - press.x, y - press.y) > 4) press.moved = true;
+    const [mx, my] = toModel(press.m, x, y);
+    bubble = { x: ((mx % P.L) + P.L) % P.L, y: Math.max(0, Math.min(P.W - DY, my)) };
+    lab.frame();
+  });
+  stage.addEventListener('pointerup', (e) => {
+    if (!press) return;
+    const p = press; press = null;
+    if (p.onBubble && p.moved) { lab.restart(); return; }
+    const [x, y] = local(e);
+    if (Math.hypot(x - p.x, y - p.y) > 10) return;
+    const [mx, my] = toModel(p.m, x, y);
+    station = { x: ((mx % P.L) + P.L) % P.L, y: Math.max(0, Math.min(P.W - DY, my)) };
+    setPhase();
+    // the recording starts where the station is set
+    rec = { t: [], a: [], b: [] };
+    recordStation();
+    stationPassed = false;
+    hint.hide();
+    lab.frame();
+    lab.chart && drawStationChart(Math.max(model.chartDays, Math.ceil(model.day() / 10) * 10));
   });
 
   // ============ TASKS ============
-  // 1: the difference view is open while the maps start to differ.
-  // 2: the difference passes 50 %. 3: a 100 times weaker bubble.
+  // 1: the difference map is on screen while the maps start to differ.
+  // 2: the station shows more than 5 °C between A and B.
+  // 3: the difference passes 50 %. 4: a 100 times weaker bubble.
   const times = {};
-  let passed = false;
+  let passed = false, stationPassed = false;
   function checkTasks(l) {
     const e = l.rec.last;
-    if (view === 'diff' && e >= 0.01) tasks.done('where');
+    if ((view === 'diff' || view === 'all') && e >= 0.01) tasks.done('where');
+    const n = rec.t.length;
+    if (!stationPassed && n && Math.abs(rec.a[n - 1] - rec.b[n - 1]) > 5) {
+      stationPassed = true;
+      $('station-feedback').textContent = t('karte.tasks.doneStation', l.fmtDays(model.day()));
+      tasks.done('station');
+    }
     if (!passed && e >= 0.5) {
       passed = true;
       $('apart-feedback').textContent = t('karte.tasks.doneApart', l.fmtDays(model.day()));
@@ -311,8 +467,10 @@
   // ============ INIT ============
   SCAPE.onIdle = () => { location.replace('index.html' + location.search); };
   layout();
-  setView(W > 1.3 * H ? 'both' : 'b');
+  setView('all');
   lab = SCAPE.chaosLab(model);
   lab.restart();
+  hint.show(t('karte.hintStation'));
+  setTimeout(() => { hint.hide(); }, 6000);
   window.addEventListener('resize', () => { W = 0; lab.frame(); });
 })();

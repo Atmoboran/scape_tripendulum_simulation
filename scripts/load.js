@@ -13,7 +13,7 @@ const path = require('path');
   const browser = await chromium.launch();
   const rows = [];
   for (const slow of [false, true]) {
-    for (const page of ['index.html', 'lorenz.html', 'lorenz96.html', 'karte.html']) {
+    for (const page of ['index.html', 'lorenz.html', 'karte.html']) {
       const ctx = await browser.newContext({ serviceWorkers: 'block' });
       const p = await ctx.newPage();
       const cdp = await ctx.newCDPSession(p);

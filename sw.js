@@ -8,12 +8,12 @@
 const CACHE = 'chaos';
 const TIMEOUT_MS = 4000;
 const FILES = [
-  './', 'index.html', 'lorenz.html', 'lorenz96.html', 'karte.html',
+  './', 'index.html', 'lorenz.html', 'karte.html',
   'theme/theme.css', 'theme/theme.js', 'css/kit.css', 'css/app.css',
-  'content/texts.de.js', 'content/lorenz.de.js', 'content/lorenz96.de.js', 'content/karte.de.js',
+  'content/texts.de.js', 'content/lorenz.de.js', 'content/karte.de.js',
   'js/view.js', 'js/texts.js', 'js/brand.js', 'js/kit.js', 'js/tasks-dialog.js', 'js/offline.js',
-  'js/physics.js', 'js/app.js', 'js/lorenz.js', 'js/chaos-lab.js', 'js/lorenz96.js', 'js/karte.js',
-  'js/models/fft.js', 'js/models/lorenz96.js', 'js/models/qg2layer.js', 'js/models/compare.js',
+  'js/physics.js', 'js/app.js', 'js/lorenz.js', 'js/chaos-lab.js', 'js/karte.js',
+  'js/models/fft.js', 'js/models/qg2layer.js', 'js/models/compare.js',
   'data/qg-start.js'
 ];
 

@@ -10,7 +10,7 @@ const url = (p) => 'file://' + path.join(__dirname, '..', p);
 (async () => {
   const browser = await chromium.launch();
   const rows = [];
-  for (const [page, speeds] of [['lorenz96.html', ['3', '8']], ['karte.html', ['2', '5']]]) {
+  for (const [page, speeds] of [['karte.html', ['0.5', '2']]]) {
     for (const rate of [1, 4, 8]) {
       for (const speed of speeds) {
         const p = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
@@ -45,7 +45,7 @@ const url = (p) => 'file://' + path.join(__dirname, '..', p);
   // long run: 3 minutes on the map at the fastest speed, memory before/after
   const p = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await p.goto(url('karte.html'));
-  await p.selectOption('#speed-select', '5');
+  await p.selectOption('#speed-select', '2');
   const heap = () => p.evaluate(() => performance.memory.usedJSHeapSize / 1048576);
   await p.click('#sim-primary');
   await p.waitForTimeout(10000);

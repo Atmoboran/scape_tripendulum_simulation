@@ -1,4 +1,4 @@
-// Texts of chapter 4 (karte.html), loaded after content/texts.de.js.
+// Texts of chapter 3 (karte.html), loaded after content/texts.de.js.
 window.TEXTS.pageTitle = 'Zwei Wetterkarten – Chaos-Pendel';
 window.TEXTS.description = 'Ein vereinfachtes Wettermodell im Browser: zwei Wetterkarten, die sich am Anfang nur durch einen winzigen warmen Fleck unterscheiden – und wie daraus zwei verschiedene Wetterlagen werden.';
 
@@ -7,18 +7,25 @@ window.TEXTS.karte = {
     headline: 'Zwei Wetter­karten',
     lead: 'Fast dieselbe Wetterlage. Dieselben Naturgesetze. Zwei verschiedene Entwicklungen.'
   },
-  stageAria: 'Schematische Wetterkarte: Farben zeigen die Temperatur, Linien die Strömung. Tippen setzt den warmen Fleck für Karte B.',
+  stageAria: 'Schematische Wetterkarten A und B und ihr Unterschied: Farben zeigen die Temperatur, Linien die Strömung. Tippen setzt eine Wetterstation, den warmen Fleck in B verschiebt man durch Ziehen.',
   viewAria: 'Ansicht',
+  viewAll: 'Alle',
   viewA: 'A',
   viewB: 'B',
-  viewBoth: 'A + B',
   viewDiff: 'Unterschied',
-  stageNote: 'Tippen setzt den warmen Fleck in Karte B',
   mapA: 'Karte A',
   mapB: 'Karte B',
   mapDiff: 'Unterschied A – B',
-  north: 'Norden · kalt',
-  south: 'Süden · warm',
+  hintStation: 'Tipp in eine Karte: Wetterstation setzen',
+  dragBubble: 'Fleck ziehen zum Verschieben',
+  stationValue: d => d + ' °C',
+  station: {
+    title: 'Wetterstation',
+    aria: 'Temperatur an der Wetterstation in Karte A und Karte B über die Zeit',
+    empty: 'Tipp in eine Karte, um dort eine Wetterstation zu setzen.',
+    yLabel: '°C'
+  },
+  northMark: 'N ↑',
   km: '1000 km',
   bubble: d => '+' + d + ' °C',
   legendTemp: 'Temperatur',
@@ -36,17 +43,21 @@ window.TEXTS.karte = {
   },
 
   diffNote: '<p><b>Unterschied</b> vergleicht die Temperatur der beiden Karten an allen Orten: die mittlere Abweichung, geteilt durch die Abweichung zwischen zwei Karten von völlig zufälligen Tagen. <b>100 %</b> heißt: Die Wetterlagen haben nichts mehr miteinander zu tun.</p>' +
-    '<p>Die Grafik zeigt den Unterschied <b>logarithmisch</b> – jede Linie 100-mal größer als die darunter. Steigt die Kurve gerade an, verdoppelt sich der Unterschied in festen Abständen; die gestrichelte orange Linie schätzt diese Verdopplungszeit. Grau: der Lauf davor.</p>',
+    '<p>Die obere Grafik zeigt diesen Unterschied über die Tage, <b>logarithmisch</b> – jede Linie 100-mal größer als die darunter. Steigt die Kurve gerade an, verdoppelt sich der Unterschied in festen Abständen; die gestrichelte orange Linie schätzt diese Verdopplungszeit. Grau: der Lauf davor.</p>' +
+    '<p>Die untere Grafik ist die <b>Wetterstation</b>: die Temperatur an einem Ort, den du in die Karte tippst – schwarz in Karte A, orange in Karte B. Erst liegen die Kurven übereinander, dann trennen sie sich.</p>',
 
-  controlsNote: '<p>Zwei Karten, <b>A</b> und <b>B</b>, starten mit genau derselben Wetterlage. Nur in B ist an einer Stelle ein <b>warmer Fleck</b> so groß wie Deutschland, ein winziges bisschen wärmer – tipp in die Karte, um ihn zu verschieben. Beide werden mit denselben Gleichungen und demselben Verfahren gerechnet.</p>' +
+  controlsNote: '<p>Zwei Karten, <b>A</b> und <b>B</b>, starten mit genau derselben Wetterlage. Nur in B ist ein <b>warmer Fleck</b> so groß wie Deutschland, ein winziges bisschen wärmer – ziehe den gestrichelten Kreis, um ihn zu verschieben. Beide werden mit denselben Gleichungen und demselben Verfahren gerechnet. Die dritte Karte zeigt, <b>wo</b> sich A und B unterscheiden.</p>' +
     '<p><b>Farben</b>: Temperatur in etwa 5 km Höhe, warm im Süden, kalt im Norden. <b>Linien</b>: die Strömung in dieser Höhe – der Wind weht an den Linien entlang, umso stärker, je dichter sie liegen, wie bei Isobaren auf der Wetterkarte.</p>' +
-    '<p><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4l14 8-14 8V4z" fill="currentColor" stroke="none"/></svg></span> startet, dann Pause und Weiter. <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg></span> startet beide noch einmal vom <b>selben</b> Anfang. <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16"/><circle cx="9" cy="9" r="1.5" fill="currentColor" stroke="none"/><circle cx="15" cy="15" r="1.5" fill="currentColor" stroke="none"/></svg></span> nimmt eine andere Wetterlage. Oben links wählst du, was du siehst: eine Karte, beide oder den <b>Unterschied</b>.</p>',
+    '<p><b>Tippen</b> in eine Karte setzt eine <b>Wetterstation</b>: Sie misst in beiden Karten die Temperatur an diesem Ort und zeichnet sie unten auf.</p>' +
+    '<p><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4l14 8-14 8V4z" fill="currentColor" stroke="none"/></svg></span> startet, dann Pause und Weiter. <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg></span> startet beide noch einmal vom <b>selben</b> Anfang. <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16"/><circle cx="9" cy="9" r="1.5" fill="currentColor" stroke="none"/><circle cx="15" cy="15" r="1.5" fill="currentColor" stroke="none"/></svg></span> nimmt eine andere Wetterlage. Oben links: <b>Alle</b> Karten oder eine einzelne groß.</p>',
 
   tasks: {
-    where: 'Schalte während des Laufs auf „Unterschied“. Wo werden die beiden Karten zuerst verschieden?',
+    where: 'Schau während des Laufs auf die Karte „Unterschied“. Wo werden die beiden Karten zuerst verschieden?',
     doneWhere: 'Der Unterschied bleibt nicht, wo er war: Die Strömung trägt ihn mit, und er wächst vor allem dort, wo warme und kalte Luft aufeinandertreffen und sich Wirbel bilden – an den Fronten.',
     apart: 'Wie viele Tage dauert es, bis die Karten so verschieden sind wie zwei zufällige Tage (Unterschied über 50 %)?',
     doneApart: d => 'Etwa ' + d + ' Tage. Dieses Modell ist viel einfacher als die Atmosphäre: Es kennt keine Gewitter, keine Wolken, keine Berge. In echten Wettermodellen wachsen Fehler auch durch solche kleinen, schnellen Vorgänge – deshalb liegt die Grenze der Vorhersage dort bei etwa zwei Wochen.',
+    station: 'Setz eine Wetterstation in die Karte und starte. Nach wie vielen Tagen zeigen A und B an deiner Station mehr als 5 °C Unterschied?',
+    doneStation: d => 'Nach ' + d + ' Tagen. Am Anfang zeigen beide Stationen dasselbe Wetter – dann geht es auseinander. Für einen einzelnen Ort geht eine Vorhersage oft schon daneben, wenn die große Wetterlage noch ähnlich aussieht.',
     smaller: 'Mach den warmen Fleck 100-mal schwächer und starte noch einmal. Bleiben die Karten jetzt 100-mal länger gleich?',
     times: list => 'Über 50 % nach: ' + list,
     timeItem: (delta, days) => days + ' Tagen (bei +' + delta + ' °C)',
@@ -58,7 +69,7 @@ window.TEXTS.karte = {
       title: 'Was wird hier simuliert?',
       body: '<p>Ein stark vereinfachtes Modell der Atmosphäre in mittleren Breiten, wie über Europa: zwei übereinanderliegende Luftschichten auf einer rotierenden Erde (das „Zweischichtenmodell“ von Norman Phillips, 1956 – das erste Modell, mit dem ein Computer Wetter von selbst entstehen ließ).</p>' +
         '<p>Im Süden ist es warm, im Norden kalt. Dieser Temperaturunterschied treibt in der Höhe einen Westwind an – und er ist <b>instabil</b>: Von selbst bilden sich Wellen und Wirbel, die warme Luft nach Norden und kalte nach Süden tragen. Das sind die Hoch- und Tiefdruckgebiete unserer Breiten in ihrer einfachsten Form.</p>' +
-        '<p>Gerechnet wird auf einem Gitter von 32 × 32 Punkten über ein Gebiet von 8000 × 8000 km, alle 15 Minuten Modellzeit ein Schritt – alles im Browser, auf jedem Gerät exakt gleich.</p>'
+        '<p>Gerechnet wird auf einem Gitter von 64 × 32 Punkten über ein Gebiet von 16 000 × 8000 km, alle 15 Minuten Modellzeit ein Schritt – alles im Browser, auf jedem Gerät exakt gleich.</p>'
     },
     shows: {
       title: 'Was zeigt das Experiment – und was nicht?',
@@ -73,7 +84,7 @@ window.TEXTS.karte = {
     measure: {
       title: 'Ist das wirklich Chaos – oder nur ein Rechenfehler?',
       body: '<p>Beide Karten werden exakt gleich gerechnet: Startet man B ohne warmen Fleck, bleiben A und B auf jeder Stelle hinter dem Komma gleich. Der Unterschied kommt also nur von der Störung.</p>' +
-        '<p>In Testrechnungen wächst der Unterschied immer mit derselben Verdopplungszeit von etwa 3,5 Tagen – egal wie klein er anfangs ist, egal wo er sitzt, und auch mit halbem Zeitschritt. Mit schwächerem Temperaturgefälle entstehen dagegen keine Wirbel, und der Unterschied wächst nicht. Die Einzelheiten stehen in der Dokumentation im Ordner <i>docs</i>.</p>'
+        '<p>In Testrechnungen wächst der Unterschied immer mit derselben Verdopplungszeit von etwa 3 Tagen – egal wie klein er anfangs ist, egal wo er sitzt, und auch mit halbem Zeitschritt. Mit schwächerem Temperaturgefälle entstehen dagegen keine Wirbel, und der Unterschied wächst nicht. Die Einzelheiten stehen in der Dokumentation im Ordner <i>docs</i>.</p>'
     }
   }
 };

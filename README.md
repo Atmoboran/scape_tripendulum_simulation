@@ -23,20 +23,17 @@ precise start buys only a few time units, the ensemble cloud, and for
 experts: once apart, pause while the two pass within 2 of each other
 (about 2-3 chances a minute, ~0.3 s each).
 
-**Chapter 3 (`lorenz96.html`)** — the Lorenz-96 model (40 values on a ring,
-F = 8): run A and run B start identically except one value; ring view and a
-space-time view, the difference over time on a log scale with a live
-estimate of the doubling time (≈ 2 "model days").
+**Chapter 3 (`karte.html`)** — a two-layer quasi-geostrophic model of the
+mid-latitude atmosphere (64 × 32 points, 16 000 × 8000 km): map A, map B
+(with a small warm bubble the visitor drags into place) and their
+difference, all three at once by default; temperature in colour,
+upper-level flow as lines. A tap sets a weather station that records the
+temperature there in A and B. Errors double in ≈ 3 days.
 
-**Chapter 4 (`karte.html`)** — a two-layer quasi-geostrophic model of the
-mid-latitude atmosphere (32 × 32, 8000 km): two weather maps, B with a
-small warm bubble that the visitor places; maps A, B, both or their
-difference, temperature in colour, upper-level flow as lines. Errors
-double in ≈ 3.5 days.
-
-Chapters 3 and 4 were built as two candidate prototypes for a museum
-station; models, numerics, validation, performance and the comparison with
-a recommendation are in [`docs/`](docs/) (German):
+Chapter 3 is the winner of two candidate prototypes for a museum station
+(the other, Lorenz-96, was tried as a chapter and taken out again; its model
+and validation stay in the repo). Models, numerics, validation,
+performance and the comparison are in [`docs/`](docs/) (German):
 [modelle](docs/modelle.md) · [numerik](docs/numerik.md) ·
 [validierung](docs/validierung.md) · [performance](docs/performance.md) ·
 [vergleich](docs/vergleich.md).
@@ -92,21 +89,19 @@ js/tasks-dialog.js  "Aufgaben" button with progress + pop-up
 js/physics.js       pendulum physics (pure functions)
 js/app.js           chapter 1: stage, interaction, loop, tasks
 js/lorenz.js        chapter 2: Lorenz model, view, interaction, tasks
-lorenz96.html       chapter 3 (Lorenz-96 twin experiment)
-karte.html          chapter 4 (two weather maps, two-layer model)
+karte.html          chapter 3 (two weather maps, two-layer model)
 js/models/          model cores without DOM, testable in Node:
-  lorenz96.js         Lorenz-96, RK4
+  lorenz96.js         Lorenz-96, RK4 (candidate A; validation and tests only)
   qg2layer.js         two-layer quasi-geostrophic model, pseudo-spectral, AB3
   fft.js              radix-2 FFT, 1-D and 2-D
   compare.js          difference records, growth rate / doubling time
-js/chaos-lab.js     chapters 3 + 4: loop, buttons, status line, log chart
-js/lorenz96.js      chapter 3: ring and space-time view, tasks
-js/karte.js         chapter 4: maps, difference map, bubble, tasks
+js/chaos-lab.js     chapter 3: loop, buttons, status line, log chart
+js/karte.js         chapter 3: maps, difference map, bubble, station, tasks
 js/offline.js       registers the service worker
 sw.js               service worker (offline cache)
 data/qg-start.js    equilibrated start states of the two-layer model
 content/texts.de.js every visible text of chapter 1 + shared texts
-content/lorenz.de.js texts of chapter 2 (likewise lorenz96.de.js, karte.de.js)
+content/lorenz.de.js texts of chapter 2 (likewise karte.de.js for chapter 3)
 tests/              node:test suites (models, UI, offline)
 scripts/            validation, spin-up, performance
 docs/               model documentation and reports (German)
@@ -119,7 +114,7 @@ General N-fold chain-pendulum equations of motion (mass-matrix form), solved
 each substep via Gaussian elimination and integrated with RK4 at a fixed
 physical time step, decoupled from the frame rate. Optional friction (a
 damping term per joint, 0.15 1/s). Lorenz: σ = 10, ρ = 28, β = 8/3, RK4.
-Lorenz-96 and the two-layer model: see docs/modelle.md and docs/numerik.md.
+Two-layer model (and Lorenz-96): see docs/modelle.md and docs/numerik.md.
 
 ## Layout
 

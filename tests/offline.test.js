@@ -21,7 +21,7 @@ test('all chapters work offline after the first visit', { skip: chromium ? false
     await p.evaluate(() => navigator.serviceWorker.ready);
     await p.waitForTimeout(500);
     await ctx.setOffline(true);
-    for (const page of ['index.html', 'lorenz.html', 'lorenz96.html', 'karte.html']) {
+    for (const page of ['index.html', 'lorenz.html', 'karte.html']) {
       const errors = [];
       p.on('pageerror', (e) => errors.push(e.message));
       await p.goto(base + page);
@@ -44,7 +44,7 @@ test('online, a changed file reaches a returning visitor without any version bum
   // a throw-away copy of the app, so the test can change a text
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'chaos-sw-'));
   const root = path.join(__dirname, '..');
-  for (const f of ['index.html', 'lorenz.html', 'lorenz96.html', 'karte.html', 'sw.js']) fs.copyFileSync(path.join(root, f), path.join(dir, f));
+  for (const f of ['index.html', 'lorenz.html', 'karte.html', 'sw.js']) fs.copyFileSync(path.join(root, f), path.join(dir, f));
   for (const d of ['theme', 'css', 'content', 'js', 'data']) fs.cpSync(path.join(root, d), path.join(dir, d), { recursive: true });
   const port = 9700 + Math.floor(Math.random() * 200);
   const server = spawn('python3', ['-m', 'http.server', String(port)], { cwd: dir, stdio: 'ignore' });

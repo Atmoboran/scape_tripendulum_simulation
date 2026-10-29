@@ -4,8 +4,9 @@
 
 - **Fester Modellzeitschritt, unabhängig von der Bildrate.** `js/chaos-lab.js`
   rechnet pro Bild so viele *ganze* Modellschritte, wie die gewählte
-  Geschwindigkeit verlangt. Schafft ein Gerät das nicht (Rechenbudget 12 ms
-  pro Bild beim Strömungsmodell, max. 40–60 Schritte), wird der Rückstand
+  Geschwindigkeit verlangt. Schafft ein Gerät das nicht (Rechenbudget pro Bild
+  mindestens 12 ms, bei langsamen Bildern bis zur Hälfte des Bildintervalls,
+  höchstens 40 Schritte), wird der Rückstand
   verworfen: Die Simulation läuft dann langsamer, aber **jeder Schritt ist
   identisch** mit dem auf einem schnellen Gerät. Ein langsames Handy liefert
   dasselbe Ergebnis, nur später.
@@ -40,7 +41,7 @@
 | | |
 |---|---|
 | Raum | pseudospektral: Ableitungen und Inversion im Fourierraum, Produkte (Jacobi-Term) im Gitterraum; 2-D-FFT eigener Bauart (`js/models/fft.js`, Radix 2) |
-| Gitter | 32 × 32 (Δx = 250 km); Anzeige spektral auf 64 × 64 interpoliert |
+| Gitter | 64 × 32 (Δx = Δy = 250 km); Anzeige direkt auf diesem Gitter, bilinear geglättet |
 | Zeit | Adams-Bashforth 3. Ordnung (Start mit Euler, dann AB2), wie pyqg |
 | Zeitschritt | dt = 900 s, 96 Schritte pro Modelltag |
 | Inversion q → ψ | pro Wellenzahl ein 2 × 2-Gleichungssystem, exakt; Mittelwert (k = 0) = 0 |
@@ -72,28 +73,34 @@
 - Zeitschritt: Gegen eine Referenz mit dt = 56 s fällt der Fehler eines
   Tageslaufs mit Ordnung ≈ 2 (Startphase des AB3 dominiert; Dämpfung dabei
   abgeschaltet, sie ist per Operator-Splitting angehängt). Der
-  Lyapunov-Exponent ändert sich bei halbiertem Zeitschritt nicht (0,196 →
-  0,196 pro Tag).
-- Raum: 64 × 64 mit dt = 450 s (eigener Spin-up) ergibt dieselbe
-  Wirbelenergie (Faktor 0,96) und ebenfalls Chaos, aber schnelleres
-  Fehlerwachstum (λ₁ = 0,33 statt 0,20 pro Tag), weil kleinere, schneller
-  wachsende Strukturen aufgelöst werden. Die *qualitative* Aussage bleibt,
-  die Verdopplungszeit ist auflösungsabhängig. Gewählt wurde 32 × 32 wegen der
-  Rechenzeit auf Handys (64 × 64 kostet etwa das 8-Fache pro Modelltag).
+  Lyapunov-Exponent ändert sich bei halbiertem Zeitschritt kaum (Mittel
+  0,212 → 0,207 pro Tag).
+- Raum: doppelte Auflösung 128 × 64 mit dt = 450 s (eigener Spin-up) ergibt
+  dieselbe Wirbelenergie (Faktor 1,00) und ebenfalls Chaos, aber etwas
+  schnelleres Fehlerwachstum (λ₁ = 0,28 statt 0,21 pro Tag), weil kleinere,
+  schneller wachsende Strukturen aufgelöst werden. Die *qualitative* Aussage
+  bleibt, die Verdopplungszeit ist auflösungsabhängig. Gewählt wurde 64 × 32
+  wegen der Rechenzeit auf Handys (die doppelte Auflösung kostet etwa das
+  8- bis 9-Fache pro Modelltag).
 
 ### Startzustände
 
 `scripts/qg-spinup.js` startet aus winzigem, reproduzierbarem Rauschen,
 rechnet 2 Jahre (Instabilität wächst ab ~Tag 150, Gleichgewicht ab ~Tag 250)
 und speichert drei Zustände im Abstand von 120 Tagen als Float32/Base64
-(32 KB). „Neuer Anfangszustand“ nimmt den nächsten und verschiebt ihn im
+(64 KB). „Neuer Anfangszustand“ nimmt den nächsten und verschiebt ihn im
 periodischen Gebiet – eine exakte Symmetrie des Modells.
 
 ### Darstellung
 
-Temperatur und Stromfunktion werden pro Bild spektral von 32² auf 64²
-interpoliert (Nullauffüllen, eine FFT 64² pro Feld), dann bilinear auf die
-Bühne skaliert. Isolinien: Marching Squares auf 64², ost-west-periodisch.
-Farben über 256er-Nachschlagetabellen. Ein langsames Gerät zeichnet die Karte
-seltener neu (höchstens ~1/3 der Zeit fürs Zeichnen), die Rechnung läuft
-unverändert weiter.
+Temperatur und Stromfunktion werden pro Modellstand einmal auf das Gitter
+zurücktransformiert (je eine FFT) und von allen drei Karten gemeinsam
+genutzt; die Isolinien (Marching Squares, ost-west-periodisch) ebenfalls nur
+einmal pro Modellstand. Farben über 256er-Nachschlagetabellen, bilineare
+Glättung beim Skalieren. Ein langsames Gerät zeichnet die Karten seltener neu;
+die Rechnung bekommt bis zur Hälfte jedes Bildintervalls und läuft so weiter
+im Solltempo.
+
+Die **Wetterstation** liest die Temperatur nicht aus dem Gitter, sondern
+summiert die Fourier-Reihe exakt am angetippten Punkt (genau, auch zwischen
+Gitterpunkten), alle 1/16 Modelltag in A und B.

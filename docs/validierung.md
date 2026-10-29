@@ -58,21 +58,21 @@ nicht chaotisch.
 Lauf schätzt, streut um ±20 % (abhängig vom Start, kurzes Fenster). Die
 Benettin-Werte sind über 5000 Zeiteinheiten gemittelt und genauer.
 
-## Kandidat B: Zweischichtenmodell (32 × 32, dt = 900 s) – gemessen
+## Kandidat B: Zweischichtenmodell (64 × 32, 16 000 × 8000 km, dt = 900 s) – gemessen
 
 | Prüfung | Ergebnis |
 |---|---|
-| Gleichgewicht (600 Tage, 12 Fenster à 50 Tage) | RMS der Dicke schwankt zwischen 0,93 und 1,08 des Mittels → statistisch stationär |
-| Temperatur (grobe Umrechnung) | Abweichungen ≈ 4,9 K RMS, Hintergrundgefälle ≈ 41 K über 8000 km |
-| Höchster Wind / Stabilitätszahl | 61 m/s / u·k·dt = 0,46 (Grenze 0,72) |
-| λ₁ (Benettin, 3 Starts × 200 Tage, tägliche Renormierung) | **0,192 / 0,196 / 0,199 pro Tag** → Verdopplung ≈ 3,5 Tage |
-| λ₁ bei halbem Zeitschritt (450 s) | 0,196 pro Tag |
-| λ₁ bei 64 × 64 (dt = 450 s, eigener Spin-up) | 0,325 pro Tag (Verdopplung 2,1 Tage); Wirbelenergie 0,96 × |
-| App-Experimente (warme Blase 500 km, zufälliger Ort, 12 Läufe à 60 Tage) | Verdopplung (Median) 3,49 / 3,42 / 3,45 Tage für 1 % / 0,01 % / 0,0001 % der typischen Abweichung |
-| Faktor nach 10 Tagen | 3,7 (lange Transiente: die runde Blase muss sich erst in die Wirbelstruktur einfügen) |
-| Zeit bis 50 % Unterschied (Median) | 42 Tage (1 %), 60 Tage (0,01 %) |
-| Kontrolle: schwache Scherung 3 m/s, Start aus Rauschen 10⁻⁶ | nach 600 Tagen 1,2 · 10⁻⁶ – **keine Instabilität, keine Wirbel** |
-| Scherung 6 m/s / 10 m/s | wächst langsam (2,6 · 10⁻² nach 600 Tagen) / volle Turbulenz nach ~250 Tagen |
+| Gleichgewicht (600 Tage, 12 Fenster à 50 Tage) | RMS der Dicke schwankt zwischen 0,92 und 1,06 des Mittels → statistisch stationär |
+| Temperatur (grobe Umrechnung) | Abweichungen ≈ 4,8 K RMS, Hintergrundgefälle ≈ 41 K über 8000 km (Süd–Nord) |
+| Höchster Wind / Stabilitätszahl | 58 m/s / u·k·dt = 0,44 (Grenze 0,72) |
+| λ₁ (Benettin, 3 Starts × 200 Tage, tägliche Renormierung) | **0,195 / 0,218 / 0,223 pro Tag** → Verdopplung ≈ 3,3 Tage |
+| λ₁ bei halbem Zeitschritt (450 s) | 0,207 pro Tag |
+| λ₁ bei doppelter Auflösung 128 × 64 (dt = 450 s, eigener Spin-up) | 0,279 pro Tag (Verdopplung 2,5 Tage); Wirbelenergie 1,00 × |
+| App-Experimente (warme Blase 500 km, zufälliger Ort, 12 Läufe à 60 Tage) | Verdopplung (Median) 3,13 / 3,18 / 3,19 Tage für 1 % / 0,01 % / 0,0001 % der typischen Abweichung |
+| Faktor nach 10 Tagen | 3,8–3,9 (lange Transiente: die runde Blase muss sich erst in die Wirbelstruktur einfügen) |
+| Zeit bis 50 % Unterschied (Median) | 38 Tage (1 %); bei 0,01 % mehr als 60 Tage |
+| Kontrolle: schwache Scherung 3 m/s, Start aus Rauschen 10⁻⁶ | nach 600 Tagen 1,1 · 10⁻⁶ – **keine Instabilität, keine Wirbel** |
+| Scherung 6 m/s / 10 m/s | wächst langsam (9,7 · 10⁻² nach 600 Tagen) / volle Turbulenz nach ~250 Tagen |
 | Reproduzierbarkeit, 100 Tage | Unterschied exakt 0 |
 | Energieerhaltung der Advektion (ohne Antrieb/Reibung/Filter, 1 Tag) | relative Änderung < 10⁻³ (Test) |
 
@@ -80,7 +80,7 @@ Benettin-Werte sind über 5000 Zeiteinheiten gemittelt und genauer.
 **chaotische Dynamik**: positives λ₁, reproduzierbar über Starts, unabhängig
 vom Zeitschritt; Störungen wachsen mit derselben Rate über vier
 Größenordnungen; ohne Instabilität (schwache Scherung) wächst nichts. Das
-schnellere Wachstum bei 64 × 64 zeigt, dass die *Zahl* (3,5 Tage) von der
+schnellere Wachstum bei doppelter Auflösung zeigt, dass die *Zahl* (3,2 Tage) von der
 Auflösung abhängt – die Aussage „kleine Unterschiede wachsen exponentiell bis
 zur Sättigung“ bleibt bestehen.
 
@@ -110,3 +110,6 @@ die App sagt das ausdrücklich.
    normiert; seither ist λ₁ bei halbem Zeitschritt unverändert.
 5. **Kontrollexperiment** zunächst falsch angesetzt (Start im turbulenten
    Zustand); ersetzt durch Start aus Rauschen.
+6. **Gebiet 2 : 1** (für drei Karten untereinander auf dem Handy): Ein
+   schmales Gebiet 8000 × 4000 km wurde instabil; gewählt wurde
+   16 000 × 8000 km auf 64 × 32 Punkten und neu validiert (Tabelle oben).

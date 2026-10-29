@@ -1,12 +1,15 @@
 # Modelle – Spezifikation und Interpretation
 
-Dieses Dokument beschreibt die beiden Modelle der Kapitel 3 und 4: was sie
-rechnen, warum diese Varianten gewählt wurden und welche Aussagen sie tragen.
+Dieses Dokument beschreibt die beiden geprüften Kandidaten: was sie rechnen,
+warum diese Varianten gewählt wurden und welche Aussagen sie tragen. In der
+App ist heute nur Kandidat B als Kapitel 3 („Karte“) enthalten; Kandidat A
+war Kapitel 3 „Ring“ und wurde nach der Durchsicht herausgenommen (Modell,
+Tests und Validierung sind im Repo geblieben).
 Numerik: [numerik.md](numerik.md) · Prüfungen: [validierung.md](validierung.md).
 
 ---
 
-## Kandidat A: Lorenz-96 (Kapitel 3, `lorenz96.html`)
+## Kandidat A: Lorenz-96 (nicht mehr in der App)
 
 ### Gleichung
 
@@ -67,7 +70,7 @@ geografische Aussagen. Die App behauptet nichts davon.
 
 ---
 
-## Kandidat B: Zweischichtenmodell (Kapitel 4, `karte.html`)
+## Kandidat B: Zweischichtenmodell (Kapitel 3, `karte.html`)
 
 ### Modellwahl
 
@@ -113,7 +116,7 @@ der aufgeprägte Hintergrund hält es aufrecht.
 
 **Umrechnung in Grad:** T′ ≈ T₀ f₀ (ψ₁ − ψ₂) / (g ΔZ) mit T₀ = 250 K,
 f₀ = 10⁻⁴ s⁻¹, ΔZ = 5 km (Abstand der Schichtmitten). Das ergibt ≈ 41 K
-Gefälle über 8000 km und Wirbel-Abweichungen von ≈ 5 K RMS – realistische
+Gefälle über 8000 km (Süd–Nord) und Wirbel-Abweichungen von ≈ 5 K RMS – realistische
 Größenordnungen für die mittlere Troposphäre. Die Umrechnung ist grob; die App
 spricht von „Temperatur in etwa 5 km Höhe“ und „grobe Werte“.
 
@@ -135,8 +138,8 @@ Hintergrund.
 
 | Parameter | Wert | Bedeutung |
 |---|---|---|
-| Gebiet | 8000 × 8000 km | Ausschnitt mittlerer Breiten |
-| Gitter | 32 × 32 (250 km) | Rechenaufwand für Handys, siehe [numerik.md](numerik.md) |
+| Gebiet | 16 000 × 8000 km (Ost-West × Süd-Nord) | Band mittlerer Breiten; Karten im Seitenverhältnis 2 : 1 passen untereinander aufs Handy |
+| Gitter | 64 × 32 (250 km) | Rechenaufwand für Handys, siehe [numerik.md](numerik.md) |
 | r_d | 500 km | Deformationsradius (bestimmt die Größe der Wirbel) |
 | δ | 1 | zwei gleich dicke Schichten |
 | U₁ − U₂ | 10 m/s | Windscherung (Westwind oben) |
@@ -146,11 +149,17 @@ Hintergrund.
 
 **Warum nicht die pyqg-Standardwerte?** pyqg ist für Ozeanwirbel
 voreingestellt (r_d = 15 km, U = 2,5 cm/s). Getestet: stabil und chaotisch,
-aber Fehler verdoppeln sich erst alle ~20 Tage, und 64 × 64 Punkte wären
+aber Fehler verdoppeln sich erst alle ~20 Tage, und 64 × 64 Punkte für 1000 km wären
 nötig – für die Atmosphäre unrealistisch langsam und für Handys zu teuer.
 Die Werte oben skalieren das Modell auf die Atmosphäre: Wirbel von
-1000–2000 km, Höhenwinde bis ≈ 60 m/s, Fehlerverdopplung ≈ 3,5 Tage
-(64 × 64: ≈ 2 Tage; Schätzungen für reale Wettermodelle: 1,5–3 Tage).
+1000–2000 km, Höhenwinde bis ≈ 60 m/s, Fehlerverdopplung ≈ 3,2 Tage
+(doppelte Auflösung: ≈ 2,5 Tage; Schätzungen für reale Wettermodelle:
+1,5–3 Tage).
+
+Ein schmaleres Gebiet (8000 × 4000 km, 32 × 16) wurde ebenfalls getestet: Es
+läuft nicht stabil (Instabilität nach ~200 Tagen) und wurde verworfen. Das
+erste quadratische Gebiet (8000 × 8000 km, 32 × 32) verhielt sich wie das
+heutige (Verdopplung 3,5 Tage).
 
 ### Was das Modell trägt – und was nicht
 
