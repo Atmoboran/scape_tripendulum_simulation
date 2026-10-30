@@ -43,20 +43,21 @@
 | Raum | pseudospektral: Ableitungen und Inversion im Fourierraum, Produkte (Jacobi-Term) im Gitterraum; 2-D-FFT eigener Bauart (`js/models/fft.js`, Radix 2) |
 | Gitter | 64 × 32 (Δx = Δy = 250 km); Anzeige direkt auf diesem Gitter, bilinear geglättet |
 | Zeit | Adams-Bashforth 3. Ordnung (Start mit Euler, dann AB2), wie pyqg |
-| Zeitschritt | dt = 900 s, 96 Schritte pro Modelltag |
+| Zeitschritt | dt = 450 s, 192 Schritte pro Modelltag |
 | Inversion q → ψ | pro Wellenzahl ein 2 × 2-Gleichungssystem, exakt; Mittelwert (k = 0) = 0 |
 | Randbedingungen | doppelt periodisch (durch die FFT automatisch) |
 | Aliasing | 2/3-Regel auf dem Zustand: Wellenzahlen über 2/3 des Maximums werden nach jedem Schritt gelöscht |
-| Kleinskalige Dämpfung | (a) Hyperviskosität ∇⁸, als exakter Integrationsfaktor, e-Faltungszeit 3 h an der kleinsten behaltenen Skala, darüber wirkungslos; (b) pyqgs exponentieller Spektralfilter, auf dt = 900 s normiert (so dass halbierter Zeitschritt nicht doppelt filtert) |
+| Kleinskalige Dämpfung | (a) Hyperviskosität ∇⁸, als exakter Integrationsfaktor, e-Faltungszeit 3 h an der kleinsten behaltenen Skala, darüber wirkungslos; (b) pyqgs exponentieller Spektralfilter, auf dt = 900 s normiert, d. h. pro Schritt mit dt/900 skaliert (so dass halbierter Zeitschritt nicht doppelt filtert) |
 | Kosten | 5 komplexe 2-D-FFTs pro Schritt (je zwei reelle Felder in einer komplexen Transformation) |
 
 ### Stabilität – was gemessen und korrigiert wurde
 
 1. **Zeitschritt.** Für pseudospektrale Advektion mit AB3 gilt
    u_max · k_max · dt < 0,72 (k_max = 2/3 · π/Δx nach Dealiasing). Mit
-   Höhenwinden bis ≈ 60–70 m/s (inkl. 10 m/s Grundströmung) ergibt dt = 900 s
-   einen Wert von 0,46–0,52 – rund 30 % Reserve. dt = 1200 s läuft noch,
-   liegt aber an der Grenze (0,70).
+   Höhenwinden bis ≈ 113 m/s (inkl. 15 m/s Grundströmung, gemessen über
+   600 Tage) ergibt dt = 450 s einen Wert von 0,42 – rund 40 % Reserve.
+   dt = 600 s lief 3000 Tage stabil, lag aber bei 0,62 und wurde deshalb
+   nicht genommen. (Mit der früheren Scherung von 10 m/s reichte dt = 900 s.)
 2. **Hermitesche Symmetrie.** Weil je zwei reelle Felder in einer komplexen FFT
    gerechnet werden, muss das Spektrum reeller Felder exakt hermitesch sein
    (q̂(−k) = q̂(k)*). Rundungsfehler verletzen das minimal; ohne Gegenmaßnahme
@@ -64,7 +65,7 @@
    nach ~700 Tagen (diagnostiziert: zwei konjugierte Moden mit ungleicher
    Amplitude). Lösung: Projektion auf das hermitesche Spektrum nach jedem
    Schritt (`symmetrize`). Danach stabil über 3000 Tage (8 Jahre) bei
-   dt = 900 und 1200 s.
+   dt = 900 und 1200 s (Scherung 10 m/s) und bei dt = 600 s (15 m/s).
 3. **Spektrale Blockade.** Die Dämpfung ist auf die kleinste *behaltene* Skala
    bezogen, sonst stauen sich Fluktuationen dort.
 
@@ -74,7 +75,7 @@
   Tageslaufs mit Ordnung ≈ 2 (Startphase des AB3 dominiert; Dämpfung dabei
   abgeschaltet, sie ist per Operator-Splitting angehängt). Der
   Lyapunov-Exponent ändert sich bei halbiertem Zeitschritt kaum (Mittel
-  0,212 → 0,207 pro Tag).
+  0,488 → 0,475 pro Tag).
 - Raum: doppelte Auflösung 128 × 64 mit dt = 450 s (eigener Spin-up) ergibt
   dieselbe Wirbelenergie (Faktor 1,00) und ebenfalls Chaos, aber etwas
   schnelleres Fehlerwachstum (λ₁ = 0,28 statt 0,21 pro Tag), weil kleinere,

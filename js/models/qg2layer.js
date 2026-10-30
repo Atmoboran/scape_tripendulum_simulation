@@ -24,16 +24,18 @@
 
   const DAY = 86400;
   // Atmosphere-like mid-latitude band (docs/modelle.md): 16 000 × 8000 km on
-  // a 64 × 32 grid (250 km cells), deformation radius 500 km, two equal layers,
-  // 10 m/s shear between them, beta at about 45° N, friction at the ground
-  // with a 1-day e-folding time. dt = 900 s keeps u·k_max·dt below AB3's
-  // limit of 0.72 for winds up to ~90 m/s (docs/numerik.md).
+  // a 64 × 32 grid (250 km cells), deformation radius 500 km, two equal
+  // layers, 15 m/s shear between them (errors double in about 1.5 days, as
+  // estimated for real weather models), beta at about 45° N, friction at the
+  // ground with a 0.8-day e-folding time. dt = 450 s keeps u·k_max·dt below
+  // AB3's limit of 0.72 for gusts up to ~190 m/s (seen: ~125 m/s;
+  // docs/numerik.md).
   // `hyper`: e-folding time (s) of the ∇⁸ damping at the smallest kept scale.
   const DEFAULTS = {
     nx: 64, ny: 32, L: 16e6, W: 8e6,
     beta: 1.6e-11, rd: 5e5, delta: 1,
-    U1: 10, U2: 0, rek: 1.2e-5,
-    dt: 900, filterfac: 23.6, hyper: 3 * 3600
+    U1: 15, U2: 0, rek: 1.5e-5,
+    dt: 450, filterfac: 23.6, hyper: 3 * 3600
   };
   // The original pyqg defaults (ocean-like eddies, errors double only every
   // ~20 days) -- kept for the validation scripts.
@@ -278,7 +280,7 @@
 
   // RMS of the thickness ψ1 − ψ2 in equilibrium (scripts/validate-qg.js):
   // two unrelated states differ by sqrt(2) times this -- "100 %".
-  const CLIM = 9.47e6;
+  const CLIM = 1.818e7;
   // Thickness → temperature of the mid troposphere (hypsometric relation
   // with f0 = 1e-4 1/s, T0 = 250 K, 5 km between the layer centres): about
   // 5·10⁻⁷ K per m²/s. A rough conversion for the display, see docs/modelle.md.

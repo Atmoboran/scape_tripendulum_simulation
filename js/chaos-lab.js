@@ -3,7 +3,8 @@
 // the loop, the buttons, the status line and the chart of how far they
 // drift apart. Each chapter hands in a model adapter:
 //   stepsPerDay, sampleEvery (steps), maxStepsPerFrame, msBudget (optional:
-//   computing time per frame, ms)
+//   computing time per frame, ms), minDrawMs (optional: redraw the stage at
+//   most this often while running)
 //   restart()        both runs back to the same start, B with the change
 //   newStart()       a different start (then restart() follows)
 //   step()           one model step of both runs
@@ -91,8 +92,10 @@
     const resetBtn = $('sim-reset'), newBtn = $('sim-new');
     const speedSelect = $('speed-select');
     const roStatus = $('ro-status'), roZeit = $('ro-zeit'), roDiff = $('ro-diff');
+    // the log chart of the difference is optional (a page may leave it out)
     const doublingNote = $('doubling-note');
-    const chart = Chart($('diff-chart'));
+    const chartCanvas = $('diff-chart');
+    const chart = chartCanvas ? Chart(chartCanvas) : { draw() {}, size() {} };
 
     const ICON_PLAY = '<path d="M6 4l14 8-14 8V4z" fill="currentColor" stroke="none"/>';
     const ICON_PAUSE = '<path d="M8 5v14M16 5v14"/>';
@@ -138,6 +141,7 @@
       const tMax = Math.max(model.chartDays || 20, Math.ceil(last / 10) * 10);
       chart.draw(lab.rec, lab.prev, lab.fit, tMax);
       if (model.drawCharts) model.drawCharts(tMax);
+      if (!doublingNote) return;
       if (lab.fit) {
         doublingNote.hidden = false;
         doublingNote.textContent = t('lab.doubling', lab.fmtDays(lab.fit.doubling));
@@ -153,7 +157,7 @@
     // third of the time goes to drawing) -- the model keeps its pace.
     let drawCost = 0, lastDraw = 0, lastChart = 0;
     function runFrame(now) {
-      if (now - lastDraw >= Math.min(100, 2 * drawCost)) {
+      if (now - lastDraw >= Math.max(model.minDrawMs || 0, Math.min(100, 2 * drawCost))) {
         const t0 = performance.now();
         model.render(lab.mode);
         drawCost = 0.8 * drawCost + 0.2 * (performance.now() - t0);

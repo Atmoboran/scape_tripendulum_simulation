@@ -1,34 +1,34 @@
 // Chapter 3: two weather maps from the two-layer model. Map A and map B
-// start from the same equilibrated weather; B has a small warm bubble. By
-// default all three maps show at once: A, B and where they differ. A tap
-// sets a weather station that records the temperature at that spot in A and
-// B. The model is js/models/qg2layer.js, loop, buttons and the difference
-// chart js/chaos-lab.js.
+// start from the same equilibrated weather; B has a small measurement error
+// (a warmer or colder spot). Always on screen: A, B and where they differ;
+// a weather station (a thermometer, moved by tapping) records the
+// temperature at one place in A and B. On wide screens its chart is the
+// fourth tile of a 2 × 2 grid, on phones it sits under the maps. The model is
+// js/models/qg2layer.js, loop and buttons js/chaos-lab.js.
 (() => {
   'use strict';
   const QG = window.QG2;
   const FFT = window.FFT;
+  const PAL = window.THEME.palette;
   const INK = window.THEME.pendulum.ink;
-  const PURPLE = window.THEME.palette.purple;
-  const ACCENT = window.THEME.palette.orange;
+  const ACCENT = PAL.orange;
   const FONT = window.THEME.font;
   const P = QG.DEFAULTS;
   const NX = P.nx, NY = P.ny, ASPECT = P.L / P.W;   // maps are twice as wide as high
   const DX = P.L / NX, DY = P.W / NY;
-  const RADIUS = 5e5;                 // the warm bubble, metres
+  const RADIUS = 5e5;                 // the measurement-error spot, metres
+  const T_RANGE = 35;                 // temperature colours: −35 … +35 °C
+  const D_RANGE = 4;                  // difference colours: −4 … +4 °C
 
   const stage = document.getElementById('stage');
   const canvas = document.getElementById('draw-canvas');
   const ctx = canvas.getContext('2d');
   const deltaRange = document.getElementById('delta-range');
   const deltaOut = document.getElementById('delta-out');
-  const signBtns = [...document.querySelectorAll('.sign-pick .pick')];
-  const viewBtns = [...document.querySelectorAll('.view-pick')];
+  const stationBox = document.querySelector('.station-box');
   const stationCanvas = document.getElementById('station-chart');
   const stationCtx = stationCanvas.getContext('2d');
-  const stationEmpty = document.getElementById('station-empty');
   const tasks = SCAPE.taskDialog('karte-tasks');
-  const hint = SCAPE.badge(document.getElementById('stage-frame'));
   const $ = (id) => document.getElementById(id);
 
   // ============ START STATES ============
@@ -52,24 +52,26 @@
   }
 
   // ============ MODEL ADAPTER ============
-  // strength of the bubble: off, then steps of ten up to 5 °C. Up to that
-  // the model stays well inside its stability limit (checked to 40 °C);
-  // above a few degrees it would no longer be a "tiny" difference.
-  const LEVELS = [0, 1e-5, 1e-4, 1e-3, 1e-2, 0.1, 1, 5];
-  let sign = 1;
-  const strength = () => LEVELS[+deltaRange.value];
-  const fmtDelta = (v) => (v === 0 ? t('karte.delta.none') : t('karte.delta.value', Math.sign(v), Math.abs(v).toLocaleString('de-DE', { maximumFractionDigits: 5 })));
-  let A, B, delta = sign * strength();
-  let bubble = { x: 0.5 * P.L, y: 0.45 * P.W };
-  let station = null;                 // { x, y } in metres
+  // The error in B: −1.0 … +1.0 °C in tenths, 0 = none (control). Checked
+  // stable far beyond that (docs/validierung.md).
+  const fmtC = (v, digits = 1) => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(digits).replace('.', ',') + ' °C';
+  const fmtDelta = (v) => (v === 0 ? t('karte.delta.none') : fmtC(v));
+  let delta = +deltaRange.value / 10;
+  let A, B;
+  let bubble = { x: 0.35 * P.L, y: 0.5 * P.W };
+  // a station from the start, a little downstream (east) of the error
+  let station = { x: bubble.x + 1.2e6, y: bubble.y };
   let rec = { t: [], a: [], b: [] };  // station recording
   let cache = { t: -1, e: 0 };
   const model = {
-    stepsPerDay: QG.DAY / P.dt,       // 96 steps of 15 minutes
-    sampleEvery: 6,
-    maxStepsPerFrame: 40,
+    stepsPerDay: QG.DAY / P.dt,       // 192 steps of 7.5 minutes
+    sampleEvery: 12,                  // 16 samples per model day
+    maxStepsPerFrame: 60,
     msBudget: 12,
-    chartDays: 40,
+    // the weather changes slowly on screen: 20 pictures a second are plenty
+    // and spare the phone a lot of pixel work
+    minDrawMs: 50,
+    chartDays: 20,
     restart() {
       const [q1, q2] = startState();
       A = new QG.Model().setQ(q1, q2);
@@ -89,7 +91,7 @@
     },
     render,
     onSample(l) { recordStation(); checkTasks(l); },
-    drawCharts: drawStationChart
+    drawCharts: (tMax) => { if (!stationInStage) drawStationChart(stationCtx, null, tMax); }
   };
 
   // ============ TEMPERATURE AT ONE PLACE ============
@@ -116,13 +118,12 @@
     return QG.KELVIN * (v - (P.U1 - P.U2) * (station.y - P.W / 2));
   }
   function recordStation() {
-    if (!station) return;
     rec.t.push(model.day()); rec.a.push(temperatureAt(A)); rec.b.push(temperatureAt(B));
   }
 
   // ============ FIELDS FOR THE DISPLAY ============
   // Temperature (°C) and upper-level flow of one run on the model grid,
-  // cached per model time: the three maps share them.
+  // cached per model time: all maps share them.
   const tr = new Float64Array(NX * NY), ti = new Float64Array(NX * NY);
   const bufs = [0, 1].map(() => ({ t: -1, T: new Float64Array(NX * NY), S: new Float64Array(NX * NY) }));
   function fields(m, slot) {
@@ -147,6 +148,21 @@
     return f;
   }
 
+  // ============ COLOURS ============
+  const hexRgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const mix = (a, b, f) => a.map((v, k) => Math.round(v + (b[k] - v) * f));
+  // 256-step tables. Temperature: the CD scale cold – neutral – warm.
+  // Difference B − A: violet (B colder) – white (equal) – yellow (B warmer),
+  // linear, so 0 is plain white.
+  const LUT_T = new Uint8Array(256 * 3), LUT_D = new Uint8Array(256 * 3);
+  const VIOLET = hexRgb(PAL.purple), WHITE = [255, 255, 255], YELLOW = hexRgb(PAL.gold);
+  const diffRgb = (f) => (f < 0.5 ? mix(VIOLET, WHITE, f * 2) : mix(WHITE, YELLOW, (f - 0.5) * 2));
+  for (let k = 0; k < 256; k++) {
+    LUT_T.set(window.THEME.tempColor(k / 255).match(/\d+/g).map(Number), 3 * k);
+    LUT_D.set(diffRgb(k / 255), 3 * k);
+  }
+  const idx = (v, range) => Math.max(0, Math.min(255, Math.round((v / range + 1) / 2 * 255)));
+
   // ============ DRAWING ============
   // soft colour fields: 1.5 device pixels per CSS pixel are plenty and save
   // a lot of rasterising on phones with 3× screens
@@ -163,17 +179,6 @@
   off.width = NX; off.height = NY;
   const offCtx = off.getContext('2d');
   const img = offCtx.createImageData(NX, NY);
-  const hexRgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
-  const purple = hexRgb(PURPLE);
-  // colour tables, 256 steps each: temperature −25 … +25 °C, difference
-  // 0.001 … 10 °C on a log scale
-  const LUT_T = new Uint8Array(256 * 3), LUT_D = new Uint8Array(256 * 3);
-  for (let k = 0; k < 256; k++) {
-    LUT_T.set(window.THEME.tempColor(k / 255).match(/\d+/g).map(Number), 3 * k);
-    LUT_D.set([0, 1, 2].map((m) => Math.round(255 + (purple[m] - 255) * k / 255)), 3 * k);
-  }
-  const idxT = (v) => Math.max(0, Math.min(255, Math.round((v + 25) / 50 * 255)));
-  const idxD = (d) => Math.max(0, Math.min(255, Math.round((Math.log10(Math.max(d, 1e-9)) + 3) / 4 * 255)));
 
   // A map is a rectangle w × h on the stage. Grid point (i, j) sits at the
   // centre of its cell; north is up.
@@ -198,7 +203,7 @@
   function segments(S) {
     let lo = Infinity, hi = -Infinity;
     for (let k = 0; k < S.length; k++) { if (S[k] < lo) lo = S[k]; if (S[k] > hi) hi = S[k]; }
-    const step = P.U1 * P.W / 9, out = [];
+    const step = P.U1 * P.W / 12, out = [];
     const first = Math.ceil(lo / step) * step;
     for (let j = 0; j < NY - 1; j++) for (let i = 0; i < NX; i++) {
       const i1 = (i + 1) % NX;
@@ -223,7 +228,7 @@
     const cw = m.w / NX, ch = m.h / NY, x0 = m.x0 + 0.5 * cw, y0 = m.y0 + m.h - 0.5 * ch;
     ctx.save();
     ctx.beginPath(); ctx.rect(m.x0, m.y0, m.w, m.h); ctx.clip();
-    ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.lineWidth = 1.1;
+    ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 1;
     ctx.beginPath();
     for (let k = 0; k < seg.length; k += 4) {
       ctx.moveTo(x0 + seg[k] * cw, y0 - seg[k + 1] * ch);
@@ -233,182 +238,194 @@
     ctx.restore();
   }
 
-  const fmt1 = (v) => v.toFixed(1).replace('.', ',').replace('-', '−');
+  // A thermometer: stem with a bulb, standing on the station's spot.
+  function thermometer(x, y, s, fill) {
+    const r = 3.6 * s, w = 2.6 * s, h = 13 * s;
+    ctx.save();
+    ctx.lineWidth = 1.5; ctx.strokeStyle = '#fff'; ctx.fillStyle = INK;
+    ctx.beginPath();
+    ctx.arc(x, y - r, r + 1.5, 0, Math.PI * 2);
+    ctx.rect(x - w / 2 - 1.5, y - r - h - 1.5, w + 3, h + 1.5);
+    ctx.fill();
+    ctx.fillStyle = fill;
+    ctx.beginPath(); ctx.arc(x, y - r, r - 0.8, 0, Math.PI * 2); ctx.fill();
+    ctx.fillRect(x - w / 2 + 0.8, y - r - h * 0.65, w - 1.6, h * 0.65);
+    ctx.restore();
+    return y - 2 * r - h;     // top of the thermometer
+  }
+
+  let fs = 11;                         // label size, follows the size of the maps
+  const font = (k = 1, weight = 500) => weight + ' ' + Math.round(fs * k) + 'px ' + FONT;
   function drawMap(m, mode) {
     const fa = fields(A, 0), fb = fields(B, 1);
     if (m.kind === 'diff') {
-      paint(m, LUT_D, (k) => idxD(Math.abs(fa.T[k] - fb.T[k])));
+      paint(m, LUT_D, (k) => idx(fb.T[k] - fa.T[k], D_RANGE));
       contours(m, fa.seg);
     } else {
       const f = m.kind === 'a' ? fa : fb;
-      paint(m, LUT_T, (k) => idxT(f.T[k]));
+      paint(m, LUT_T, (k) => idx(f.T[k], T_RANGE));
       contours(m, f.seg);
     }
     ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.strokeRect(m.x0, m.y0, m.w, m.h);
-    ctx.fillStyle = INK; ctx.font = '500 11px ' + FONT; ctx.textBaseline = 'bottom'; ctx.textAlign = 'left';
-    ctx.fillText(t(m.kind === 'a' ? 'karte.mapA' : m.kind === 'b' ? 'karte.mapB' : 'karte.mapDiff'), m.x0, m.y0 - 3);
-    // north is up: a small mark in the top right corner of each map
-    ctx.textAlign = 'right';
-    ctx.fillText(t('karte.northMark'), m.x0 + m.w, m.y0 - 3);
-    // the bubble before the start (in B and the difference)
+    ctx.fillStyle = INK; ctx.font = font(1.15); ctx.textBaseline = 'bottom'; ctx.textAlign = 'left';
+    ctx.fillText(t(m.kind === 'a' ? 'karte.mapA' : m.kind === 'b' ? 'karte.mapB' : 'karte.mapDiff'), m.x0, m.y0 - 4);
+    // the measurement error before the start (in B and the difference)
     if (mode === 'setup' && m.kind !== 'a' && delta !== 0) {
-      const [bx, by] = toScreen(m, bubble.x, bubble.y), r = RADIUS / P.L * m.w;
+      const [bx, by] = toScreen(m, bubble.x, bubble.y), r = Math.max(RADIUS / P.L * m.w, 8);
       ctx.strokeStyle = INK; ctx.setLineDash([4, 4]); ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(bx, by, Math.max(r, 8), 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
-      ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-      ctx.fillText(t('karte.bubble', fmtDelta(delta)), bx, by - Math.max(r, 8) - 3);
+      ctx.beginPath(); ctx.arc(bx, by, r, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+      ctx.font = font(1, 600); ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      ctx.fillText(fmtDelta(delta), bx, by - r - 3);
     }
-    // the weather station: a pin, with the reading in A and B
-    if (station) {
-      const [sx, sy] = toScreen(m, station.x, station.y);
-      ctx.fillStyle = INK; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx - 6, sy - 12); ctx.lineTo(sx + 6, sy - 12); ctx.closePath(); ctx.fill(); ctx.stroke();
-      if (m.kind !== 'diff' && rec.t.length) {
-        const v = m.kind === 'a' ? rec.a[rec.a.length - 1] : rec.b[rec.b.length - 1];
-        const label = t('karte.stationValue', fmt1(v));
-        ctx.font = '500 11px ' + FONT;
-        const w = ctx.measureText(label).width + 8;
-        const lx = Math.min(Math.max(sx - w / 2, m.x0 + 2), m.x0 + m.w - w - 2), ly = Math.max(sy - 32, m.y0 + 2);
-        ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.fillRect(lx, ly, w, 17);
-        ctx.fillStyle = m.kind === 'a' ? INK : ACCENT; ctx.fillRect(lx, ly + 15, w, 2);
-        ctx.fillStyle = INK; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-        ctx.fillText(label, lx + 4, ly + 8.5);
-      }
-    }
+    // the weather station: a thermometer with its reading -- in the
+    // difference map the difference B − A
+    const [sx, sy] = toScreen(m, station.x, station.y);
+    const n = rec.t.length;
+    const v = m.kind === 'a' ? rec.a[n - 1] : m.kind === 'b' ? rec.b[n - 1] : rec.b[n - 1] - rec.a[n - 1];
+    const s = Math.max(0.9, Math.min(1.6, m.w / 420));
+    const fill = m.kind === 'diff' ? (v >= 0 ? PAL.gold : PAL.purple) : (m.kind === 'a' ? INK : ACCENT);
+    const top = thermometer(sx, sy, s, m.kind === 'diff' ? fill : (window.THEME.tempColor(Math.max(0, Math.min(1, (v / T_RANGE + 1) / 2)))));
+    const label = m.kind === 'diff' ? (Math.abs(v) < 0.05 ? '±0,0 °C' : fmtC(v)) : fmtC(v).replace('+', '');
+    ctx.font = font(1, 600);
+    const lw = ctx.measureText(label).width + 10, lh = fs * 1.5;
+    const lx = Math.min(Math.max(sx + 7 * s, m.x0 + 2), m.x0 + m.w - lw - 2), ly = Math.max(top - 2, m.y0 + 2);
+    ctx.fillStyle = 'rgba(255,255,255,.92)'; ctx.fillRect(lx, ly, lw, lh);
+    ctx.fillStyle = m.kind === 'diff' ? fill : (m.kind === 'a' ? INK : ACCENT); ctx.fillRect(lx, ly + lh - 2, lw, 2);
+    ctx.fillStyle = INK; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText(label, lx + 5, ly + lh / 2);
   }
 
-  // Where the maps go: for "all", whichever arrangement makes them largest
-  // -- three in a column (phone), three in a row, or A and B side by side
-  // with the difference below.
-  const LABEL = 16, GAP = 10;
-  function arrange(kinds, x0, y0, w, h) {
-    if (kinds.length === 1) {
-      const mw = Math.min(w, h * ASPECT);
-      return [{ kind: kinds[0], x0: x0 + (w - mw) / 2, y0, w: mw, h: mw / ASPECT }];
+  // Where the tiles go. Wide stages: 2 × 2 -- A, B, difference and the
+  // station's chart. Narrow ones (phones): the three maps in a column, the
+  // chart under the stage.
+  let stationInStage = false;
+  function arrange(x0, y0, w, h) {
+    const lab = fs * 1.6, gap = Math.max(10, fs);
+    const col = Math.min(w, ((h - 3 * lab - 2 * gap) / 3) * ASPECT);
+    const grid = Math.min((w - gap) / 2, ((h - 2 * lab - gap) / 2) * ASPECT);
+    if (grid >= col * 0.9 && W > 560) {
+      const mw = grid, mh = mw / ASPECT;
+      const left = x0 + (w - 2 * mw - gap) / 2, top = y0 + fs * 0.6;   // right under the legends
+      const at = (c, r) => ({ x0: left + c * (mw + gap), y0: top + lab + r * (mh + lab + gap), w: mw, h: mh });
+      return [Object.assign(at(0, 0), { kind: 'a' }), Object.assign(at(1, 0), { kind: 'b' }), Object.assign(at(0, 1), { kind: 'diff' }), Object.assign(at(1, 1), { kind: 'station' })];
     }
-    const options = [
-      { cols: 1, rows: 3 }, { cols: 3, rows: 1 }, { cols: 2, rows: 2 }
-    ].map((o) => {
-      const mw = Math.min((w - (o.cols - 1) * GAP) / o.cols, ((h - o.rows * LABEL - (o.rows - 1) * GAP) / o.rows) * ASPECT);
-      return Object.assign(o, { mw });
-    });
-    const best = options.reduce((a, b) => (b.mw > a.mw ? b : a));
-    const mw = best.mw, mh = mw / ASPECT;
-    const totalW = best.cols * mw + (best.cols - 1) * GAP;
-    const rows = best.cols === 3 ? 1 : best.cols === 2 ? 2 : 3;
-    y0 += Math.max(0, (h - rows * (mh + LABEL) - (rows - 1) * GAP) / 2);   // centred in the height
-    return kinds.map((kind, k) => {
-      let col = k % best.cols, row = Math.floor(k / best.cols);
-      let left = x0 + (w - totalW) / 2;
-      if (best.cols === 2 && k === 2) { col = 0; left = x0 + (w - mw) / 2; }   // the difference centred below
-      return { kind, x0: left + col * (mw + GAP), y0: y0 + row * (mh + LABEL + GAP), w: mw, h: mh };
-    });
+    const mw = col, mh = mw / ASPECT;
+    const left = x0 + (w - mw) / 2, top = y0 + Math.max(0, (h - 3 * (mh + lab) - 2 * gap) / 2);
+    return ['a', 'b', 'diff'].map((kind, r) => ({ kind, x0: left, y0: top + lab + r * (mh + lab + gap), w: mw, h: mh }));
   }
 
-  let view = 'all', maps = [];
+  let maps = [];
   function render(mode) {
     layout();
     ctx.clearRect(0, 0, W, H);
-    // narrow stages put the colour scale in its own row under the buttons
-    const narrow = W < 560;
-    const top = (narrow ? 104 : 60) + LABEL, side = 12, bottom = 32;
-    const kinds = view === 'all' ? ['a', 'b', 'diff'] : [view];
-    maps = arrange(kinds, side, top, W - 2 * side, H - top - bottom);
+    // text grows with the stage: 11 px on a phone up to 18 px on a big screen
+    fs = Math.max(11, Math.min(18, Math.min(W, H * 1.4) / 52));
+    const legendH = fs * 4.2;
+    const tiles = arrange(12, legendH + 10, W - 24, H - legendH - 10 - fs * 2.6);
+    maps = tiles.filter((m) => m.kind !== 'station');
     maps.forEach((m) => drawMap(m, mode));
+    const st = tiles.find((m) => m.kind === 'station');
+    if (stationInStage !== !!st) { stationInStage = !!st; stationBox.hidden = stationInStage; }
+    if (st) drawStationChart(ctx, st, Math.max(model.chartDays, Math.ceil(model.day() / 10) * 10));
     // the scale bar under the lowest map
     const last = maps.reduce((a, b) => (b.y0 + b.h > a.y0 + a.h ? b : a));
-    ctx.fillStyle = INK; ctx.font = '500 10px ' + FONT; ctx.textBaseline = 'top';
+    ctx.fillStyle = INK; ctx.font = font(0.95); ctx.textBaseline = 'top';
     const km = 1e6 / P.L * last.w;
     ctx.fillRect(last.x0, last.y0 + last.h + 8, km, 3);
     ctx.textAlign = 'left';
-    ctx.fillText(t('karte.km'), last.x0 + km + 6, last.y0 + last.h + 4);
-    legend(narrow);
+    ctx.fillText(t('karte.km'), last.x0 + km + 6, last.y0 + last.h + 3);
+    legend();
   }
-  function legend(narrow) {
-    const diffOnly = view === 'diff';
-    const bars = view === 'all' ? ['temp', 'diff'] : [diffOnly ? 'diff' : 'temp'];
-    const w = Math.min(120, (W - 40) * (narrow ? 0.45 : 0.22));
-    bars.forEach((kind, k) => {
-      const x = narrow ? 14 + k * (w + 24) : W - (bars.length - k) * (w + 18), y = narrow ? 70 : 20;
+  function legend() {
+    // two colour scales at the top, sized with the stage
+    const w = Math.min(W * 0.36, fs * 15), h = fs * 0.8, y = fs * 1.6 + 6;
+    [['temp', 14], ['diff', 14 + w + fs * 2.5]].forEach(([kind, x]) => {
       const g = ctx.createLinearGradient(x, 0, x + w, 0);
       for (let s = 0; s <= 10; s++) {
         const f = s / 10;
-        g.addColorStop(f, kind === 'diff' ? 'rgb(' + [0, 1, 2].map((c) => Math.round(255 + (purple[c] - 255) * f)).join(',') + ')' : window.THEME.tempColor(f * 0.8 + 0.1));
+        g.addColorStop(f, kind === 'diff' ? 'rgb(' + diffRgb(f).join(',') + ')' : window.THEME.tempColor(f));
       }
-      ctx.fillStyle = g; ctx.fillRect(x, y, w, 8);
-      ctx.strokeStyle = INK; ctx.lineWidth = 1; ctx.strokeRect(x, y, w, 8);
-      ctx.fillStyle = INK; ctx.font = '500 10px ' + FONT; ctx.textBaseline = 'top';
+      ctx.fillStyle = g; ctx.fillRect(x, y, w, h);
+      ctx.strokeStyle = INK; ctx.lineWidth = 1; ctx.strokeRect(x, y, w, h);
+      ctx.fillStyle = INK; ctx.font = font(0.9); ctx.textBaseline = 'top';
       const ends = t(kind === 'diff' ? 'karte.legendDiffEnds' : 'karte.legendTempEnds');
-      ctx.textAlign = 'left'; ctx.fillText(ends[0], x, y + 11);
-      ctx.textAlign = 'right'; ctx.fillText(ends[1], x + w, y + 11);
-      ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-      ctx.fillText(t(kind === 'diff' ? 'karte.legendDiff' : 'karte.legendTemp'), x + w / 2, y - 2);
+      ctx.textAlign = 'left'; ctx.fillText(ends[0], x, y + h + 3);
+      ctx.textAlign = 'center'; ctx.fillText(ends[1], x + w / 2, y + h + 3);
+      ctx.textAlign = 'right'; ctx.fillText(ends[2], x + w, y + h + 3);
+      ctx.font = font(1.05, 600); ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+      ctx.fillText(t(kind === 'diff' ? 'karte.legendDiff' : 'karte.legendTemp'), x, y - 3);
     });
   }
 
   // ============ STATION CHART ============
-  const sdpr = dpr;
-  function drawStationChart(tMax) {
-    const r = stationCanvas.getBoundingClientRect();
-    const w = r.width, h = r.height;
-    if (stationCanvas.width !== Math.round(w * sdpr)) { stationCanvas.width = Math.round(w * sdpr); stationCanvas.height = Math.round(h * sdpr); }
-    const g = stationCtx;
-    g.setTransform(sdpr, 0, 0, sdpr, 0, 0);
-    g.clearRect(0, 0, w, h);
-    stationEmpty.hidden = !!station;
-    if (!station) return;          // only the hint until a station is set
-    const padL = 72, padR = 8, padT = 6, padB = 20;
-    g.font = '500 10px ' + FONT; g.fillStyle = INK;
-    // axes
+  // Temperature at the station in A (black) and B (orange) over the days.
+  // Drawn into its own canvas under the stage, or into the 4th tile.
+  function drawStationChart(g, tile, tMax) {
+    let x0 = 0, y0 = 0, w, h;
+    if (tile) {
+      ({ x0, y0, w, h } = tile);
+      g.fillStyle = '#fff'; g.fillRect(x0, y0, w, h);
+      g.strokeStyle = INK; g.lineWidth = 1.5; g.strokeRect(x0, y0, w, h);
+      g.fillStyle = INK; g.font = font(1.15); g.textAlign = 'left'; g.textBaseline = 'bottom';
+      g.fillText(t('karte.station.title'), x0, y0 - 4);
+      // the key, top right above the tile
+      g.font = font(0.95); g.textAlign = 'right';
+      g.fillText(t('karte.mapB'), x0 + w, y0 - 4);
+      const kb = g.measureText(t('karte.mapB')).width;
+      g.fillStyle = ACCENT; g.fillRect(x0 + w - kb - 26, y0 - 4 - fs * 0.55, 18, 3);
+      g.fillStyle = INK; g.fillText(t('karte.mapA'), x0 + w - kb - 34, y0 - 4);
+      const ka = g.measureText(t('karte.mapA')).width;
+      g.fillRect(x0 + w - kb - ka - 60, y0 - 4 - fs * 0.55, 18, 3);
+    } else {
+      const r = stationCanvas.getBoundingClientRect();
+      w = r.width; h = r.height;
+      if (stationCanvas.width !== Math.round(w * dpr)) { stationCanvas.width = Math.round(w * dpr); stationCanvas.height = Math.round(h * dpr); }
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      g.clearRect(0, 0, w, h);
+    }
+    const f = tile ? fs : 11;
+    const padL = f * 4.6, padR = 10, padT = 10, padB = f * 2.1;
+    g.font = '500 ' + Math.round(f * 0.9) + 'px ' + FONT; g.fillStyle = INK;
     let lo = Infinity, hi = -Infinity;
     for (let k = 0; k < rec.t.length; k++) { lo = Math.min(lo, rec.a[k], rec.b[k]); hi = Math.max(hi, rec.a[k], rec.b[k]); }
     if (!(hi > lo)) { lo = (isFinite(lo) ? lo : 0) - 5; hi = lo + 10; }
-    const pad = Math.max(2, (hi - lo) * 0.1);
-    lo = Math.floor((lo - pad) / 5) * 5; hi = Math.ceil((hi + pad) / 5) * 5;
-    const x = (d) => padL + (w - padL - padR) * d / tMax, y = (v) => padT + (h - padT - padB) * (hi - v) / (hi - lo);
+    lo = Math.floor((lo - 2) / 5) * 5; hi = Math.ceil((hi + 2) / 5) * 5;
+    const X = (d) => x0 + padL + (w - padL - padR) * d / tMax, Y = (v) => y0 + padT + (h - padT - padB) * (hi - v) / (hi - lo);
     g.strokeStyle = 'rgba(0,0,0,.12)'; g.lineWidth = 1; g.textAlign = 'right'; g.textBaseline = 'middle';
     const step = hi - lo > 30 ? 10 : 5;
     for (let v = lo; v <= hi; v += step) {
-      g.beginPath(); g.moveTo(padL, y(v)); g.lineTo(w - padR, y(v)); g.stroke();
-      g.fillText(fmt1(v).replace(',0', '') + ' °C', padL - 6, y(v));
+      g.beginPath(); g.moveTo(x0 + padL, Y(v)); g.lineTo(x0 + w - padR, Y(v)); g.stroke();
+      g.fillText(fmtC(v, 0).replace('+', ''), x0 + padL - 6, Y(v));
     }
     g.textAlign = 'center'; g.textBaseline = 'top';
     const st = tMax > 60 ? 20 : tMax > 30 ? 10 : 5;
-    for (let d = 0; d <= tMax + 1e-9; d += st) g.fillText(String(d), x(d), h - padB + 5);
-    g.textAlign = 'right';
-    g.fillText(t('lab.chartDays'), padL - 8, h - padB + 5);
-    g.save(); g.translate(8, padT + (h - padT - padB) / 2); g.rotate(-Math.PI / 2);
-    g.textAlign = 'center'; g.textBaseline = 'top'; g.fillText(t('karte.legendTemp'), 0, 0); g.restore();
+    for (let d = 0; d <= tMax + 1e-9; d += st) {
+      // the last tick carries the unit: "20 Tage"
+      const last = d + st > tMax + 1e-9;
+      g.textAlign = last ? 'right' : 'center';
+      g.fillText(last ? d + ' ' + t('lab.chartDays') : String(d), last ? X(d) + 2 : X(d), y0 + h - padB + 6);
+    }
     const line = (vals, col, width) => {
       if (rec.t.length < 2) return;
       g.strokeStyle = col; g.lineWidth = width; g.lineJoin = 'round';
       g.beginPath();
-      for (let k = 0; k < rec.t.length; k++) { const px = x(Math.min(rec.t[k], tMax)), py = y(vals[k]); if (k) g.lineTo(px, py); else g.moveTo(px, py); }
+      for (let k = 0; k < rec.t.length; k++) { const px = X(Math.min(rec.t[k], tMax)), py = Y(vals[k]); if (k) g.lineTo(px, py); else g.moveTo(px, py); }
       g.stroke();
     };
-    line(rec.b, ACCENT, 2.4);
-    line(rec.a, INK, 1.6);
+    line(rec.b, ACCENT, tile ? 3 : 2.4);
+    line(rec.a, INK, tile ? 2 : 1.6);
   }
 
   // ============ INTERACTION ============
   let lab;
-  function setView(v) {
-    view = v;
-    viewBtns.forEach((x) => { const on = x.dataset.view === v; x.classList.toggle('active', on); x.setAttribute('aria-pressed', String(on)); });
-    if (lab) lab.frame();
-  }
-  viewBtns.forEach((btn) => btn.addEventListener('click', () => setView(btn.dataset.view)));
   function setDelta() {
-    delta = sign * strength();
+    delta = +deltaRange.value / 10;
     deltaOut.textContent = fmtDelta(delta);
-    signBtns.forEach((b) => { const on = +b.dataset.sign === sign; b.classList.toggle('active', on); b.setAttribute('aria-pressed', String(on)); });
   }
   deltaRange.addEventListener('input', () => { setDelta(); lab.restart(); });
-  signBtns.forEach((b) => b.addEventListener('click', () => { sign = +b.dataset.sign; setDelta(); lab.restart(); }));
-  setDelta();
 
-  // Drag the bubble (before the start) or tap anywhere on a map for a
-  // weather station.
+  // Drag the error spot (before the start), tap anywhere on a map to move
+  // the weather station there.
   let press = null;
   const local = (e) => { const r = stage.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
   const mapAt = (x, y) => maps.find((m) => x >= m.x0 && x <= m.x0 + m.w && y >= m.y0 && y <= m.y0 + m.h);
@@ -444,22 +461,20 @@
     rec = { t: [], a: [], b: [] };
     recordStation();
     stationPassed = false;
-    hint.hide();
     lab.frame();
-    lab.chart && drawStationChart(Math.max(model.chartDays, Math.ceil(model.day() / 10) * 10));
   });
 
   // ============ TASKS ============
-  // 1: the difference map is on screen while the maps start to differ.
-  // 2: the station shows more than 5 °C between A and B.
-  // 3: the difference passes 50 %. 4: a 100 times weaker bubble.
+  // 1: the difference map shows the maps drifting apart.
+  // 2: the station shows more than 2 °C between A and B.
+  // 3: the difference passes 50 %. 4: a 10 times smaller error.
   const times = {};
   let passed = false, stationPassed = false;
   function checkTasks(l) {
     const e = l.rec.last;
-    if ((view === 'diff' || view === 'all') && e >= 0.01) tasks.done('where');
+    if (e >= 0.05) tasks.done('where');
     const n = rec.t.length;
-    if (!stationPassed && n && Math.abs(rec.a[n - 1] - rec.b[n - 1]) > 5) {
+    if (!stationPassed && n && Math.abs(rec.a[n - 1] - rec.b[n - 1]) > 2) {
       stationPassed = true;
       $('station-feedback').textContent = t('karte.tasks.doneStation', l.fmtDays(model.day()));
       tasks.done('station');
@@ -470,11 +485,10 @@
       tasks.done('apart');
       times[Math.abs(delta)] = model.day();
       const keys = Object.keys(times).map(Number).sort((x, y) => y - x);
-      const label = (k) => fmtDelta(sign * k);
       $('smaller-times').hidden = false;
-      $('smaller-times').textContent = t('karte.tasks.times', keys.map((k) => t('karte.tasks.timeItem', label(k), l.fmtDays(times[k]))).join(' · '));
+      $('smaller-times').textContent = t('karte.tasks.times', keys.map((k) => t('karte.tasks.timeItem', fmtC(k).replace('+', '±'), l.fmtDays(times[k]))).join(' · '));
       if (keys.length >= 2 && !tasks.isDone('smaller')) {
-        const small = Math.min(...keys), big = keys.find((k) => k > small);
+        const small = Math.min(...keys), big = Math.max(...keys);
         $('smaller-feedback').textContent = t('karte.tasks.doneSmaller', l.fmtDays(times[small]), l.fmtDays(times[big]), Math.round(big / small).toLocaleString('de-DE'));
         tasks.done('smaller');
       }
@@ -483,11 +497,10 @@
 
   // ============ INIT ============
   SCAPE.onIdle = () => { location.replace('index.html' + location.search); };
+  setPhase();
+  setDelta();
   layout();
-  setView('all');
   lab = SCAPE.chaosLab(model);
   lab.restart();
-  hint.show(t('karte.hintStation'));
-  setTimeout(() => { hint.hide(); }, 6000);
   window.addEventListener('resize', () => { W = 0; lab.frame(); });
 })();

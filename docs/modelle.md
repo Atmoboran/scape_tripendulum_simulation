@@ -142,19 +142,28 @@ Hintergrund.
 | Gitter | 64 × 32 (250 km) | Rechenaufwand für Handys, siehe [numerik.md](numerik.md) |
 | r_d | 500 km | Deformationsradius (bestimmt die Größe der Wirbel) |
 | δ | 1 | zwei gleich dicke Schichten |
-| U₁ − U₂ | 10 m/s | Windscherung (Westwind oben) |
+| U₁ − U₂ | 15 m/s | Windscherung (Westwind oben) |
 | β | 1,6·10⁻¹¹ (m s)⁻¹ | etwa 45° N |
-| r_ek | 1,2·10⁻⁵ s⁻¹ | Bodenreibung, e-Faltungszeit ≈ 1 Tag |
-| dt | 900 s | siehe Stabilitätsanalyse |
+| r_ek | 1,5·10⁻⁵ s⁻¹ | Bodenreibung, e-Faltungszeit ≈ 0,8 Tage |
+| dt | 450 s | siehe Stabilitätsanalyse |
 
 **Warum nicht die pyqg-Standardwerte?** pyqg ist für Ozeanwirbel
 voreingestellt (r_d = 15 km, U = 2,5 cm/s). Getestet: stabil und chaotisch,
 aber Fehler verdoppeln sich erst alle ~20 Tage, und 64 × 64 Punkte für 1000 km wären
 nötig – für die Atmosphäre unrealistisch langsam und für Handys zu teuer.
 Die Werte oben skalieren das Modell auf die Atmosphäre: Wirbel von
-1000–2000 km, Höhenwinde bis ≈ 60 m/s, Fehlerverdopplung ≈ 3,2 Tage
-(doppelte Auflösung: ≈ 2,5 Tage; Schätzungen für reale Wettermodelle:
-1,5–3 Tage).
+1000–2000 km, Temperaturabweichungen ≈ 9 K, Fehlerverdopplung ≈ 1,4–1,6 Tage
+(Schätzungen für reale Wettermodelle: 1,5–3 Tage). In Böen erreicht der
+Höhenwind bis ≈ 110 m/s (Jetstream real: bis ≈ 100 m/s, selten mehr).
+
+**Warum 15 m/s Scherung?** Mit 10 m/s verdoppelten sich Fehler erst alle
+≈ 3,2 Tage; ein Messfehler von 1 °C brauchte über drei Wochen, bis die
+Wetterstation mehr als 2 °C Unterschied zeigte. Echte Vorhersagen werden
+aber schon nach etwa einer Woche unsicher. Mit 15 m/s sind es ≈ 9 Tage
+(Median von 8 Läufen; 0,1 °C: ≈ 14 Tage). Statt die Zeitachse künstlich
+umzurechnen, wurde die Physik so gewählt, dass die Zeit stimmt; der
+Zeitschritt wurde dafür halbiert. 20 m/s wäre noch schneller (≈ 6 Tage),
+bringt aber Winde von 150–180 m/s und wurde verworfen.
 
 Ein schmaleres Gebiet (8000 × 4000 km, 32 × 16) wurde ebenfalls getestet: Es
 läuft nicht stabil (Instabilität nach ~200 Tagen) und wurde verworfen. Das
@@ -169,7 +178,7 @@ Grenze der Vorhersagbarkeit in einem physikalisch begründeten Modell.
 
 Es trägt nicht: eine Wettervorhersage für Mitteleuropa, Feuchte, Wolken,
 Niederschlag, Gebirge, Land/Meer, Jahreszeiten. Die Zeit bis zum völligen
-Auseinanderlaufen (≈ 30–60 Tage) ist **länger** als in der Wirklichkeit
+Auseinanderlaufen (≈ 15–25 Tage) ist **länger** als in der Wirklichkeit
 (≈ 2 Wochen), weil kleine, schnelle Prozesse (Konvektion) fehlen; die App sagt
 das in der Rückmeldung zur Aufgabe 2.
 

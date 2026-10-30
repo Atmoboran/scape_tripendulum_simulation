@@ -25,11 +25,13 @@ experts: once apart, pause while the two pass within 2 of each other
 
 **Chapter 3 (`karte.html`)** — a two-layer quasi-geostrophic model of the
 mid-latitude atmosphere (64 × 32 points, 16 000 × 8000 km): map A, map B
-(with a small warm or cold bubble the visitor drags into place and sets
-from 0.000 01 to 5 °C in steps of ten, or off as a control) and their
-difference, all three at once by default; temperature in colour,
-upper-level flow as lines. A tap sets a weather station that records the
-temperature there in A and B. Errors double in ≈ 3 days.
+(with a small measurement error, a bubble the visitor drags into place and
+sets from −1 to +1 °C on one slider; 0 is the control) and their signed
+difference B − A (violet – white – yellow); temperature in colour,
+upper-level flow as lines. A weather station (thermometer, set by default,
+moved by a tap) records the temperature there in A and B; on wide screens
+its chart is the fourth tile of a 2 × 2 grid. Errors double in ≈ 1.5 days;
+a 1 °C error shows at the station (> 2 °C) after about 9 days.
 
 Chapter 3 is the winner of two candidate prototypes for a museum station
 (the other, Lorenz-96, was tried as a chapter and taken out again; its model
@@ -96,7 +98,7 @@ js/models/          model cores without DOM, testable in Node:
   qg2layer.js         two-layer quasi-geostrophic model, pseudo-spectral, AB3
   fft.js              radix-2 FFT, 1-D and 2-D
   compare.js          difference records, growth rate / doubling time
-js/chaos-lab.js     chapter 3: loop, buttons, status line, log chart
+js/chaos-lab.js     chapter 3: loop, buttons, status line
 js/karte.js         chapter 3: maps, difference map, bubble, station, tasks
 js/offline.js       registers the service worker
 sw.js               service worker (offline cache)

@@ -42,17 +42,15 @@ for (const page of ['karte.html']) {
   });
 }
 
-test('karte.html: the difference view updates while running', opts, async () => {
+test('karte.html: the maps (incl. the difference map) update while running', opts, async () => {
   const browser = await chromium.launch();
   const p = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   await p.goto(url('karte.html'));
-  await p.click('.view-pick[data-view="diff"]');
   const shot = async () => p.locator('#draw-canvas').screenshot();
   const before = await shot();
   await p.click('#sim-primary'); await p.waitForTimeout(1500); await p.click('#sim-primary');
   const after = await shot();
   assert.notDeepEqual(before, after);
-  assert.equal(await p.locator('.view-pick[data-view="diff"]').getAttribute('aria-pressed'), 'true');
   await browser.close();
 });
 
@@ -67,18 +65,27 @@ test('all three chapters load without errors', opts, async () => {
   await browser.close();
 });
 
-test('karte.html: all three maps are the start view; a tap sets a station that records A and B', opts, async () => {
+test('karte.html: a station is set from the start and records A and B; a tap moves it', opts, async () => {
   const browser = await chromium.launch();
   const p = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await p.goto(url('karte.html'));
-  assert.equal(await p.locator('.view-pick[data-view="all"]').getAttribute('aria-pressed'), 'true');
-  assert.ok(await p.locator('#station-empty').isVisible());
+  const chart = () => p.evaluate(() => document.getElementById('station-chart').toDataURL());
+  const before = await chart();
+  await p.selectOption('#speed-select', '2');
+  await p.click('#sim-primary'); await p.waitForTimeout(1500); await p.click('#sim-primary');
+  assert.notEqual(await chart(), before, 'station chart drawn');
   const s = await p.locator('#stage').boundingBox();
   await p.mouse.click(s.x + s.width / 2, s.y + s.height * 0.35);
-  assert.ok(await p.locator('#station-empty').isHidden(), 'station set');
-  await p.selectOption('#speed-select', '2');
-  await p.click('#sim-primary'); await p.waitForTimeout(1500);
-  const n = await p.evaluate(() => document.getElementById('station-chart').toDataURL().length);
-  assert.ok(n > 2000, 'station chart drawn');
+  await p.waitForTimeout(300);
+  assert.ok(await p.locator('#station-chart').isVisible());
+  await browser.close();
+});
+
+test('karte.html: wide screens put the station chart into the stage (2 × 2)', opts, async () => {
+  const browser = await chromium.launch();
+  const p = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  await p.goto(url('karte.html'));
+  await p.waitForTimeout(300);
+  assert.ok(await p.locator('.station-box').isHidden());
   await browser.close();
 });

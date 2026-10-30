@@ -24,26 +24,28 @@ Einsteigergerät bei 4×–8×.
 
 ## Kapitel 3 „Karte“ (Handy-Ansicht 390 × 844, Pixeldichte 2, alle drei Karten)
 
-| CPU | Tempo (Soll) | Bilder/s | 95 % der Bilder unter | erreicht | Speicher |
-|---|---|---|---|---|---|
-| 1× | Normal 0,5 Tage/s | 57 | 33 ms | 0,51 Tage/s | 9,5 MB |
-| 1× | Schnell 2 Tage/s | 46 | 33 ms | 1,99 Tage/s | 9,5 MB |
-| 4× | Normal 0,5 | 10 | 167 ms | 0,45 | 9,5 MB |
-| 4× | Schnell 2 | 6 | 233 ms | 0,84 | 9,5 MB |
-| 8× | Normal 0,5 | 4 | 300 ms | 0,22 | 9,5 MB |
-| 8× | Schnell 2 | 3 | 417 ms | 0,44 | 9,5 MB |
+Stand: Scherung 15 m/s, dt = 450 s (192 Schritte pro Modelltag, doppelt so
+viele wie vorher).
+
+| CPU | Tempo (Soll) | Bilder/s | erreicht |
+|---|---|---|---|
+| 1× | Normal 0,5 Tage/s | 56 | 0,5 Tage/s |
+| 1× | Schnell 2 Tage/s | – | ≈ 1,6 Tage/s |
+| 4× | Normal 0,5 | – | 0,24 Tage/s (Rechnung begrenzt, FFT ≈ 25 %) |
+| 8× | Normal 0,5 | – | 0,10 Tage/s |
 
 **Kosten im Einzelnen (Browser, 1×):** ein Modellschritt (64 × 32) ≈ 0,5 ms,
-zwei Läufe à 96 Schritte pro Modelltag; im Normaltempo also ≈ 50 ms Rechnen
+zwei Läufe à 192 Schritte pro Modelltag; im Normaltempo also ≈ 100 ms Rechnen
 pro Sekunde.
 
 **Bewertung:**
 
-- Ungedrosselt flüssig, Normaltempo und schnelles Tempo werden erreicht.
-- Bei 4× wird das Normaltempo fast erreicht (das Experiment dauert ~10 %
-  länger), die Animation ruckelt aber (10 Bilder/s) – in dieser Umgebung ohne
-  GPU; auf echten Geräten ist mehr zu erwarten.
-- Bei 8× läuft alles mit halbem Tempo.
+- Ungedrosselt flüssig im Normaltempo; „Schnell“ erreicht ≈ 80 %.
+- Bei 4× läuft das Experiment mit halbem Tempo, bei 8× mit einem Fünftel –
+  der halbierte Zeitschritt kostet hier spürbar.
+- **Empfehlung:** das Modell in einen Web Worker verlegen (eigener Thread).
+  Dann rechnet es parallel zum Zeichnen; auf Mehrkern-Handys sollte das
+  Normaltempo auch bei 4× erreichbar sein.
 - **Keine langen Blockaden:** Die Rechnung pro Bild ist begrenzt (mindestens
   12 ms, bei langsamen Bildern bis zur Hälfte des Bildintervalls); das Zeichnen
   passt sich an.

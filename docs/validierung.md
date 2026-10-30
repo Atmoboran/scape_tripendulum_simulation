@@ -58,29 +58,31 @@ nicht chaotisch.
 Lauf schätzt, streut um ±20 % (abhängig vom Start, kurzes Fenster). Die
 Benettin-Werte sind über 5000 Zeiteinheiten gemittelt und genauer.
 
-## Kandidat B: Zweischichtenmodell (64 × 32, 16 000 × 8000 km, dt = 900 s) – gemessen
+## Kandidat B: Zweischichtenmodell (64 × 32, 16 000 × 8000 km, Scherung 15 m/s, dt = 450 s) – gemessen
 
 | Prüfung | Ergebnis |
 |---|---|
-| Gleichgewicht (600 Tage, 12 Fenster à 50 Tage) | RMS der Dicke schwankt zwischen 0,92 und 1,06 des Mittels → statistisch stationär |
-| Temperatur (grobe Umrechnung) | Abweichungen ≈ 4,8 K RMS, Hintergrundgefälle ≈ 41 K über 8000 km (Süd–Nord) |
-| Höchster Wind / Stabilitätszahl | 58 m/s / u·k·dt = 0,44 (Grenze 0,72) |
-| λ₁ (Benettin, 3 Starts × 200 Tage, tägliche Renormierung) | **0,195 / 0,218 / 0,223 pro Tag** → Verdopplung ≈ 3,3 Tage |
-| λ₁ bei halbem Zeitschritt (450 s) | 0,207 pro Tag |
-| λ₁ bei doppelter Auflösung 128 × 64 (dt = 450 s, eigener Spin-up) | 0,279 pro Tag (Verdopplung 2,5 Tage); Wirbelenergie 1,00 × |
-| App-Experimente (warme Blase 500 km, zufälliger Ort, 12 Läufe à 60 Tage) | Verdopplung (Median) 3,13 / 3,18 / 3,19 Tage für 1 % / 0,01 % / 0,0001 % der typischen Abweichung |
-| Faktor nach 10 Tagen | 3,8–3,9 (lange Transiente: die runde Blase muss sich erst in die Wirbelstruktur einfügen) |
-| Zeit bis 50 % Unterschied (Median) | 38 Tage (1 %); bei 0,01 % mehr als 60 Tage |
-| Kontrolle: schwache Scherung 3 m/s, Start aus Rauschen 10⁻⁶ | nach 600 Tagen 1,1 · 10⁻⁶ – **keine Instabilität, keine Wirbel** |
-| Scherung 6 m/s / 10 m/s | wächst langsam (9,7 · 10⁻² nach 600 Tagen) / volle Turbulenz nach ~250 Tagen |
-| Reproduzierbarkeit, 100 Tage | Unterschied exakt 0 |
+| Gleichgewicht (600 Tage, 12 Fenster à 50 Tage) | RMS der Dicke schwankt zwischen 0,96 und 1,07 des Mittels → statistisch stationär |
+| Temperatur (grobe Umrechnung) | Abweichungen ≈ 9,3 K RMS, Hintergrundgefälle ≈ 61 K über 8000 km (Süd–Nord) |
+| Höchster Wind / Stabilitätszahl | 113 m/s / u·k·dt = 0,42 (Grenze 0,72) |
+| λ₁ (Benettin, 3 Starts × 200 Tage, tägliche Renormierung) | **0,486 / 0,487 / 0,490 pro Tag** → Verdopplung ≈ 1,4 Tage |
+| λ₁ bei halbem Zeitschritt (225 s) | 0,475 pro Tag |
+| App-Experimente (warme Blase 500 km, zufälliger Ort, 12 Läufe à 60 Tage, 1 % der typischen Abweichung) | Verdopplung (Median) 1,57 Tage; Zeit bis 50 % Unterschied 16,8 Tage; Faktor nach 10 Tagen 68 |
+| Wetterstation: Unterschied > 2 °C (Median von 8 Läufen) | Messfehler 1 °C: ≈ 9–10 Tage; 0,1 °C: ≈ 14 Tage |
+| Langlauf dt = 600 s | 3000 Tage stabil (aber Stabilitätszahl 0,62 → dt = 450 s gewählt) |
+| Reproduzierbarkeit | ohne Störung Unterschied exakt 0 (Test) |
 | Energieerhaltung der Advektion (ohne Antrieb/Reibung/Filter, 1 Tag) | relative Änderung < 10⁻³ (Test) |
+
+Frühere Einstellung (Scherung 10 m/s, dt = 900 s), zum Vergleich: λ₁ =
+0,195–0,223 pro Tag (Verdopplung ≈ 3,3 Tage), bei 128 × 64 Punkten 0,279;
+Kontrolle mit schwacher Scherung 3 m/s aus Rauschen 10⁻⁶: nach 600 Tagen
+1,1 · 10⁻⁶ – **keine Instabilität, keine Wirbel**.
 
 **Bewertung:** Das Modell zeigt unter den verwendeten Bedingungen
 **chaotische Dynamik**: positives λ₁, reproduzierbar über Starts, unabhängig
 vom Zeitschritt; Störungen wachsen mit derselben Rate über vier
 Größenordnungen; ohne Instabilität (schwache Scherung) wächst nichts. Das
-schnellere Wachstum bei doppelter Auflösung zeigt, dass die *Zahl* (3,2 Tage) von der
+schnellere Wachstum bei doppelter Auflösung zeigt, dass die *Zahl* (Verdopplungszeit) von der
 Auflösung abhängt – die Aussage „kleine Unterschiede wachsen exponentiell bis
 zur Sättigung“ bleibt bestehen.
 
@@ -93,7 +95,7 @@ Reserve, (e) Langläufe von 8 Jahren ohne Drift.
 **Einordnung:** Für reale Wettermodelle schätzt man Fehlerverdopplungszeiten
 von 1,5–3 Tagen für großräumige Strukturen (Lorenz 1982 und Folgearbeiten).
 Das Modell liegt in derselben Größenordnung. Die Zeit bis zur völligen
-Entkopplung ist mit 30–60 Tagen länger als die reale Vorhersagegrenze
+Entkopplung ist mit 15–25 Tagen länger als die reale Vorhersagegrenze
 (≈ 2 Wochen), weil das Modell die kleinen, schnellen Prozesse (Konvektion,
 Feuchte) nicht enthält, die in der Atmosphäre Fehler zusätzlich verstärken –
 die App sagt das ausdrücklich.
@@ -110,12 +112,12 @@ die App sagt das ausdrücklich.
    normiert; seither ist λ₁ bei halbem Zeitschritt unverändert.
 5. **Kontrollexperiment** zunächst falsch angesetzt (Start im turbulenten
    Zustand); ersetzt durch Start aus Rauschen.
-6. **Stärke des Flecks frei wählbar** (Regler 0,000 01 … 5 °C, warm oder
-   kalt): bei drei Wetterlagen je 60 Tage mit ±0,000 01 bis +40 °C und −10 °C
-   gerechnet – immer stabil, größter Wind 59–70 m/s, Stabilitätszahl ≤ 0,53.
-   Der 500 km breite, weiche Fleck erzeugt selbst bei großen Werten nur mäßigen
-   Wind. Die Obergrenze 5 °C ist inhaltlich gewählt (darüber ist es kein
-   „winziger“ Unterschied mehr), nicht numerisch.
+6. **Stärke des Messfehlers frei wählbar** (heute ein Regler −1 … +1 °C in
+   Zehnteln; früher 0,000 01 … 5 °C): bei drei Wetterlagen je 60 Tage mit
+   ±0,000 01 bis +40 °C und −10 °C gerechnet – immer stabil. Der 500 km
+   breite, weiche Fleck erzeugt selbst bei großen Werten nur mäßigen Wind.
 7. **Gebiet 2 : 1** (für drei Karten untereinander auf dem Handy): Ein
    schmales Gebiet 8000 × 4000 km wurde instabil; gewählt wurde
    16 000 × 8000 km auf 64 × 32 Punkten und neu validiert (Tabelle oben).
+8. **Zu langsames Auseinanderlaufen** (10 m/s: Station > 2 °C erst nach
+   ≈ 3 Wochen) → Scherung 15 m/s, Zeitschritt halbiert, neu validiert.
