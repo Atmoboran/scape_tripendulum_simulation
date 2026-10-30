@@ -67,6 +67,14 @@
         <button type="button" class="btn icon primary" id="sim-primary" data-t-aria="lorenz.primary.startAria">
           <svg id="sim-primary-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 4l14 8-14 8V4z" fill="currentColor" stroke="none"/></svg>
         </button>
+        <label class="select-field speed-field">
+          <span class="select-label" data-t="lab.speed"></span>
+          <select id="speed-select">
+            <option value="0.2" data-t="lab.slow"></option>
+            <option value="0.4" data-t="lab.normal" selected></option>
+            <option value="0.8" data-t="lab.fast"></option>
+          </select>
+        </label>
         <button type="button" class="btn icon" id="sim-reset" data-t-aria="lorenz.primary.resetAria">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg>
         </button>

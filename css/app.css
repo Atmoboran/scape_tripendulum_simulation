@@ -185,3 +185,6 @@
 
 .ctl-row .speed-field { flex: 0 0 auto; min-width: 7.2em; }
 .strength input[type="range"] { display: block; width: 100%; height: 30px; margin: 4px 0 0; accent-color: var(--active); }
+/* small caption under an icon button (friction on/off) */
+.ctl-row .btn.icon:has(.btn-sub) { flex-direction: column; gap: 2px; }
+.btn-sub { font-size: 10px; line-height: 1; letter-spacing: .02em; text-transform: none; white-space: nowrap; }

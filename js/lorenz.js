@@ -29,7 +29,8 @@
   const dist = (p, q) => Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]);
 
   const DT = 0.002;          // model time per step
-  const SPEED = 0.8;         // model time per real second
+  // model time per real second: the tempo select (0.2, 0.4 or 0.8)
+  const speedSelect = document.getElementById('speed-select');
   const SEPARATED = 5;       // "apart" for the readout and the tasks
   const TRAIL = 1200;        // steps of trail behind Rot and Blau
   const CLOUD = 300;         // members of the ensemble
@@ -297,12 +298,14 @@
   }
 
   // ============ LOOP ============
-  let running = false, lastT = 0;
+  let running = false, lastT = 0, carry = 0;
   function step(now) {
     if (!running) return;
     const frameDt = Math.min((now - lastT) / 1000, 0.05);
     lastT = now;
-    const steps = Math.round(frameDt * SPEED / DT);
+    carry += frameDt * +speedSelect.value / DT;
+    const steps = Math.floor(carry);
+    carry -= steps;
     for (let i = 0; i < steps; i++) {
       if (ensemble) {
         for (let k = 0; k < CLOUD; k++) cloud[k] = rk4(cloud[k], DT);

@@ -52,9 +52,7 @@
       <div class="readout-grid" aria-live="polite">
         <div><span data-t="readout.status"></span><b id="ro-status" data-t="readout.ready"></b></div>
         <div><span data-t="readout.time"></span><b id="ro-zeit"></b></div>
-        <div><span class="ro-label"><span data-t="lab.difference"></span><button type="button" class="info" aria-controls="diff-help" data-t-aria="lab.differenceInfoAria"></button></span><b id="ro-diff"></b></div>
       </div>
-      <div class="info-note" id="diff-help" hidden data-t-html="karte.diffNote"></div>
 
       <div class="chart-box station-box">
         <div class="chart-head"><span data-t="karte.station.title"></span> <span class="station-key"><i class="key-a"></i><span data-t="karte.mapA"></span> <i class="key-b"></i><span data-t="karte.mapB"></span></span></div>
@@ -113,6 +111,7 @@
         <li class="quiz-item" data-task="apart"><p class="quiz-q" data-t="karte.tasks.apart"></p><p class="quiz-feedback" id="apart-feedback"></p></li>
         <li class="quiz-item" data-task="station"><p class="quiz-q" data-t="karte.tasks.station"></p><p class="quiz-feedback" id="station-feedback"></p></li>
         <li class="quiz-item" data-task="smaller"><p class="quiz-q" data-t="karte.tasks.smaller"></p><p class="quiz-best" id="smaller-times" hidden></p><p class="quiz-feedback" id="smaller-feedback"></p></li>
+        <li class="quiz-item" data-task="place"><p class="quiz-q" data-t="karte.tasks.place"></p><p class="quiz-best" id="place-times" hidden></p><p class="quiz-feedback" id="place-feedback"></p></li>
       </ol>
     </div>
   </dialog>

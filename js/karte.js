@@ -162,6 +162,11 @@
     LUT_D.set(diffRgb(k / 255), 3 * k);
   }
   const idx = (v, range) => Math.max(0, Math.min(255, Math.round((v / range + 1) / 2 * 255)));
+  // The difference is stretched near 0 (power 0.3, with or without sign),
+  // so a 0,1 °C start is visible -- below 0,005 °C it stays plain white.
+  const D_POW = 0.3, D_MIN = 0.005;
+  const dScale = (v) => { const a = Math.abs(v); return a <= D_MIN ? 0 : Math.sign(v) * Math.min(1, ((a - D_MIN) / (D_RANGE - D_MIN)) ** D_POW); };
+  const idxD = (v) => Math.round((dScale(v) + 1) / 2 * 255);
 
   // ============ DRAWING ============
   // soft colour fields: 1.5 device pixels per CSS pixel are plenty and save
@@ -259,7 +264,7 @@
   function drawMap(m, mode) {
     const fa = fields(A, 0), fb = fields(B, 1);
     if (m.kind === 'diff') {
-      paint(m, LUT_D, (k) => idx(fb.T[k] - fa.T[k], D_RANGE));
+      paint(m, LUT_D, (k) => idxD(fb.T[k] - fa.T[k]));
       contours(m, fa.seg);
     } else {
       const f = m.kind === 'a' ? fa : fb;
@@ -269,6 +274,9 @@
     ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.strokeRect(m.x0, m.y0, m.w, m.h);
     ctx.fillStyle = INK; ctx.font = font(1.15); ctx.textBaseline = 'bottom'; ctx.textAlign = 'left';
     ctx.fillText(t(m.kind === 'a' ? 'karte.mapA' : m.kind === 'b' ? 'karte.mapB' : 'karte.mapDiff'), m.x0, m.y0 - 4);
+    // the colour scale right in the title row: temperature next to map A,
+    // the difference next to its own map
+    if (m.kind !== 'b') colourBar(m, m.kind === 'diff' ? 'diff' : 'temp');
     // the measurement error before the start (in B and the difference)
     if (mode === 'setup' && m.kind !== 'a' && delta !== 0) {
       const [bx, by] = toScreen(m, bubble.x, bubble.y), r = Math.max(RADIUS / P.L * m.w, 8);
@@ -282,17 +290,16 @@
     const [sx, sy] = toScreen(m, station.x, station.y);
     const n = rec.t.length;
     const v = m.kind === 'a' ? rec.a[n - 1] : m.kind === 'b' ? rec.b[n - 1] : rec.b[n - 1] - rec.a[n - 1];
-    const s = Math.max(0.9, Math.min(1.6, m.w / 420));
+    const s = Math.max(0.7, Math.min(1.2, m.w / 560));
     const fill = m.kind === 'diff' ? (v >= 0 ? PAL.gold : PAL.purple) : (m.kind === 'a' ? INK : ACCENT);
     const top = thermometer(sx, sy, s, m.kind === 'diff' ? fill : (window.THEME.tempColor(Math.max(0, Math.min(1, (v / T_RANGE + 1) / 2)))));
     const label = m.kind === 'diff' ? (Math.abs(v) < 0.05 ? '±0,0 °C' : fmtC(v)) : fmtC(v).replace('+', '');
-    ctx.font = font(1, 600);
-    const lw = ctx.measureText(label).width + 10, lh = fs * 1.5;
+    ctx.font = font(0.9, 600);
+    const lw = ctx.measureText(label).width + 8, lh = fs * 1.3;
     const lx = Math.min(Math.max(sx + 7 * s, m.x0 + 2), m.x0 + m.w - lw - 2), ly = Math.max(top - 2, m.y0 + 2);
     ctx.fillStyle = 'rgba(255,255,255,.92)'; ctx.fillRect(lx, ly, lw, lh);
-    ctx.fillStyle = m.kind === 'diff' ? fill : (m.kind === 'a' ? INK : ACCENT); ctx.fillRect(lx, ly + lh - 2, lw, 2);
     ctx.fillStyle = INK; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-    ctx.fillText(label, lx + 5, ly + lh / 2);
+    ctx.fillText(label, lx + 4, ly + lh / 2);
   }
 
   // Where the tiles go. Wide stages: 2 × 2 -- A, B, difference and the
@@ -305,7 +312,7 @@
     const grid = Math.min((w - gap) / 2, ((h - 2 * lab - gap) / 2) * ASPECT);
     if (grid >= col * 0.9 && W > 560) {
       const mw = grid, mh = mw / ASPECT;
-      const left = x0 + (w - 2 * mw - gap) / 2, top = y0 + fs * 0.6;   // right under the legends
+      const left = x0 + (w - 2 * mw - gap) / 2, top = y0;
       const at = (c, r) => ({ x0: left + c * (mw + gap), y0: top + lab + r * (mh + lab + gap), w: mw, h: mh });
       return [Object.assign(at(0, 0), { kind: 'a' }), Object.assign(at(1, 0), { kind: 'b' }), Object.assign(at(0, 1), { kind: 'diff' }), Object.assign(at(1, 1), { kind: 'station' })];
     }
@@ -320,8 +327,7 @@
     ctx.clearRect(0, 0, W, H);
     // text grows with the stage: 11 px on a phone up to 18 px on a big screen
     fs = Math.max(11, Math.min(18, Math.min(W, H * 1.4) / 52));
-    const legendH = fs * 4.2;
-    const tiles = arrange(12, legendH + 10, W - 24, H - legendH - 10 - fs * 2.6);
+    const tiles = arrange(12, 6, W - 24, H - 6 - fs * 2.6);
     maps = tiles.filter((m) => m.kind !== 'station');
     maps.forEach((m) => drawMap(m, mode));
     const st = tiles.find((m) => m.kind === 'station');
@@ -334,27 +340,34 @@
     ctx.fillRect(last.x0, last.y0 + last.h + 8, km, 3);
     ctx.textAlign = 'left';
     ctx.fillText(t('karte.km'), last.x0 + km + 6, last.y0 + last.h + 3);
-    legend();
   }
-  function legend() {
-    // two colour scales at the top, sized with the stage
-    const w = Math.min(W * 0.36, fs * 15), h = fs * 0.8, y = fs * 1.6 + 6;
-    [['temp', 14], ['diff', 14 + w + fs * 2.5]].forEach(([kind, x]) => {
-      const g = ctx.createLinearGradient(x, 0, x + w, 0);
-      for (let s = 0; s <= 10; s++) {
-        const f = s / 10;
-        g.addColorStop(f, kind === 'diff' ? 'rgb(' + diffRgb(f).join(',') + ')' : window.THEME.tempColor(f));
-      }
-      ctx.fillStyle = g; ctx.fillRect(x, y, w, h);
-      ctx.strokeStyle = INK; ctx.lineWidth = 1; ctx.strokeRect(x, y, w, h);
-      ctx.fillStyle = INK; ctx.font = font(0.9); ctx.textBaseline = 'top';
-      const ends = t(kind === 'diff' ? 'karte.legendDiffEnds' : 'karte.legendTempEnds');
-      ctx.textAlign = 'left'; ctx.fillText(ends[0], x, y + h + 3);
-      ctx.textAlign = 'center'; ctx.fillText(ends[1], x + w / 2, y + h + 3);
-      ctx.textAlign = 'right'; ctx.fillText(ends[2], x + w, y + h + 3);
-      ctx.font = font(1.05, 600); ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
-      ctx.fillText(t(kind === 'diff' ? 'karte.legendDiff' : 'karte.legendTemp'), x, y - 3);
-    });
+  // A small colour bar at the right end of a map's title row:
+  // "−35 °C [bar] +35 °C"; the difference bar carries ticks at ±1 and 0.
+  function colourBar(m, kind) {
+    const ends = t(kind === 'diff' ? 'karte.legendDiffEnds' : 'karte.legendTempEnds');
+    ctx.font = font(0.85);
+    const lw = ctx.measureText(ends[0]).width, rw = ctx.measureText(ends[2]).width;
+    ctx.save(); ctx.font = font(1.15);
+    const title = ctx.measureText(t(kind === 'diff' ? 'karte.mapDiff' : 'karte.mapA')).width;
+    ctx.restore();
+    const room = m.w - title - fs * 1.5 - lw - rw - 12;
+    const w = Math.min(fs * 11, room), h = fs * 0.7;
+    if (w < fs * 3) return;
+    const x = m.x0 + m.w - rw - 6 - w, y = m.y0 - 6 - h;
+    const g = ctx.createLinearGradient(x, 0, x + w, 0);
+    for (let s = 0; s <= 20; s++) {
+      const f = s / 20;
+      g.addColorStop(f, kind === 'diff' ? 'rgb(' + diffRgb(f).join(',') + ')' : window.THEME.tempColor(f));
+    }
+    ctx.fillStyle = g; ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = INK; ctx.lineWidth = 1; ctx.strokeRect(x, y, w, h);
+    ctx.beginPath();
+    const ticks = kind === 'diff' ? [-1, 0, 1].map((v) => (dScale(v) + 1) / 2) : [0.5];
+    ticks.forEach((f) => { ctx.moveTo(x + f * w, y + h); ctx.lineTo(x + f * w, y + h + 3); });
+    ctx.stroke();
+    ctx.fillStyle = INK; ctx.font = font(0.85); ctx.textBaseline = 'middle';
+    ctx.textAlign = 'right'; ctx.fillText(ends[0], x - 4, y + h / 2);
+    ctx.textAlign = 'left'; ctx.fillText(ends[2], x + w + 4, y + h / 2);
   }
 
   // ============ STATION CHART ============
@@ -437,15 +450,19 @@
       const [bx, by] = toScreen(m, bubble.x, bubble.y);
       onBubble = Math.hypot(x - bx, y - by) < Math.max(RADIUS / P.L * m.w, 8) + 14;
     }
-    press = { x, y, m, onBubble, moved: false };
-    if (onBubble) { stage.setPointerCapture(e.pointerId); e.preventDefault(); }
+    // the thermometer can be dragged too, at any time
+    const [sx, sy] = toScreen(m, station.x, station.y);
+    const onStation = !onBubble && Math.abs(x - sx) < 16 && y > sy - 34 && y < sy + 10;
+    press = { x, y, m, onBubble, onStation, moved: false };
+    if (onBubble || onStation) { stage.setPointerCapture(e.pointerId); e.preventDefault(); }
   });
   stage.addEventListener('pointermove', (e) => {
-    if (!press || !press.onBubble) return;
+    if (!press || !(press.onBubble || press.onStation)) return;
     const [x, y] = local(e);
     if (Math.hypot(x - press.x, y - press.y) > 4) press.moved = true;
     const [mx, my] = toModel(press.m, x, y);
-    bubble = { x: ((mx % P.L) + P.L) % P.L, y: Math.max(0, Math.min(P.W - DY, my)) };
+    const at = { x: ((mx % P.L) + P.L) % P.L, y: Math.max(0, Math.min(P.W - DY, my)) };
+    if (press.onBubble) bubble = at; else moveStation(at);
     lab.frame();
   });
   stage.addEventListener('pointerup', (e) => {
@@ -454,21 +471,38 @@
     if (p.onBubble && p.moved) { lab.restart(); return; }
     const [x, y] = local(e);
     if (Math.hypot(x - p.x, y - p.y) > 10) return;
+    if (p.onStation && p.moved) return;
     const [mx, my] = toModel(p.m, x, y);
-    station = { x: ((mx % P.L) + P.L) % P.L, y: Math.max(0, Math.min(P.W - DY, my)) };
+    moveStation({ x: ((mx % P.L) + P.L) % P.L, y: Math.max(0, Math.min(P.W - DY, my)) });
+    lab.frame();
+  });
+  function moveStation(at) {
+    station = at;
     setPhase();
     // the recording starts where the station is set
     rec = { t: [], a: [], b: [] };
     recordStation();
     stationPassed = false;
-    lab.frame();
-  });
+  }
 
   // ============ TASKS ============
   // 1: the difference map shows the maps drifting apart.
   // 2: the station shows more than 2 °C between A and B.
   // 3: the difference passes 50 %. 4: a 10 times smaller error.
-  const times = {};
+  // 5: the same error at three places at least 1500 km apart.
+  const times = {}, places = [];
+  function notePlace(l, day) {
+    const near = (q) => Math.hypot(Math.min(Math.abs(q.x - bubble.x), P.L - Math.abs(q.x - bubble.x)), q.y - bubble.y) < 1.5e6;
+    const known = places.find(near);
+    if (known) known.day = day; else places.push({ x: bubble.x, y: bubble.y, day });
+    $('place-times').hidden = false;
+    $('place-times').textContent = t('karte.tasks.placeTimes', places.map((q) => l.fmtDays(q.day)).join(' · '));
+    if (places.length >= 3 && !tasks.isDone('place')) {
+      const ds = places.map((q) => q.day);
+      $('place-feedback').textContent = t('karte.tasks.donePlace', l.fmtDays(Math.min(...ds)), l.fmtDays(Math.max(...ds)));
+      tasks.done('place');
+    }
+  }
   let passed = false, stationPassed = false;
   function checkTasks(l) {
     const e = l.rec.last;
@@ -484,6 +518,7 @@
       $('apart-feedback').textContent = t('karte.tasks.doneApart', l.fmtDays(model.day()));
       tasks.done('apart');
       times[Math.abs(delta)] = model.day();
+      notePlace(l, model.day());
       const keys = Object.keys(times).map(Number).sort((x, y) => y - x);
       $('smaller-times').hidden = false;
       $('smaller-times').textContent = t('karte.tasks.times', keys.map((k) => t('karte.tasks.timeItem', fmtC(k).replace('+', '±'), l.fmtDays(times[k]))).join(' · '));
@@ -502,5 +537,7 @@
   layout();
   lab = SCAPE.chaosLab(model);
   lab.restart();
+  // for the tests: the relative difference of the two maps (no longer shown)
+  SCAPE.karteDiff = () => model.diff();
   window.addEventListener('resize', () => { W = 0; lab.frame(); });
 })();

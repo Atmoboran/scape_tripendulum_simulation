@@ -18,7 +18,7 @@ for (const page of ['karte.html']) {
     p.on('pageerror', (e) => errors.push(e.message));
     await p.goto(url(page));
     const time = async () => num(await p.locator('#ro-zeit').textContent());
-    const diff = async () => num(await p.locator('#ro-diff').textContent());
+    const diff = async () => p.evaluate(() => window.SCAPE.karteDiff());
     assert.equal(await time(), 0);
     const d0 = await diff();
     await p.click('#sim-primary'); await p.waitForTimeout(1500);
@@ -32,9 +32,9 @@ for (const page of ['karte.html']) {
     assert.equal(await diff(), d0, 'restart gives the same start difference');
     // control: no perturbation → no difference, ever
     await p.locator('#delta-range').fill('0');
-    assert.equal(await p.locator('#ro-diff').textContent(), '0 %');
+    assert.equal(await diff(), 0);
     await p.click('#sim-primary'); await p.waitForTimeout(1500);
-    assert.equal(await p.locator('#ro-diff').textContent(), '0 %');
+    assert.equal(await diff(), 0);
     // the page fits the phone width
     assert.ok(await p.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'no horizontal scroll');
     assert.deepEqual(errors, []);

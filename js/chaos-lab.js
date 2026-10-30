@@ -124,7 +124,7 @@
 
     function readout() {
       roZeit.textContent = t('lab.days', lab.fmtDays(model.day()));
-      roDiff.textContent = lab.fmtPercent(model.diff());
+      if (roDiff) roDiff.textContent = lab.fmtPercent(model.diff());
     }
 
     function sample() {

@@ -7,7 +7,7 @@ window.TEXTS.karte = {
     headline: 'Zwei Wetter­karten',
     lead: 'Fast dieselbe Wetterlage. Dieselben Naturgesetze. Zwei verschiedene Entwicklungen.'
   },
-  stageAria: 'Schematische Wetterkarten A und B und ihr Unterschied: Farben zeigen die Temperatur, Linien die Strömung. Ein Thermometer zeigt die Wetterstation; Tippen versetzt sie, den Messfehler in B verschiebt man durch Ziehen.',
+  stageAria: 'Schematische Wetterkarten A und B und ihr Unterschied: Farben zeigen die Temperatur, Linien die Strömung. Ein Thermometer zeigt die Wetterstation; Tippen versetzt sie, Thermometer und Abweichung in B verschiebt man durch Ziehen.',
   mapA: 'Karte A',
   mapB: 'Karte B',
   mapDiff: 'Unterschied B − A',
@@ -22,18 +22,16 @@ window.TEXTS.karte = {
   },
 
   delta: {
-    label: 'Messfehler in Karte B',
-    none: 'kein Messfehler (Kontrolle)',
+    label: 'Abweichung in Karte B',
+    none: 'keine Abweichung (Kontrolle)',
     scaleLow: '−1 °C kälter',
     scaleMid: '0',
     scaleHigh: 'wärmer +1 °C'
   },
 
-  diffNote: '<p><b>Unterschied</b> vergleicht die Temperatur der beiden Karten an allen Orten: die mittlere Abweichung, geteilt durch die Abweichung zwischen zwei Karten von völlig zufälligen Tagen. <b>0 %</b>: beide Karten gleich. <b>100 %</b>: Die Wetterlagen haben nichts mehr miteinander zu tun.</p>' +
-    '<p>Wo genau sie sich unterscheiden, zeigt die Karte <b>Unterschied B − A</b>: weiß, wo beide gleich sind, gelb, wo B wärmer ist, violett, wo B kälter ist.</p>',
-  controlsNote: '<p>Zwei Karten, <b>A</b> und <b>B</b>, starten mit genau derselben Wetterlage. In B gibt es nur einen kleinen <b>Messfehler</b>: einen Fleck so groß wie Deutschland, ein paar Zehntel Grad wärmer oder kälter. Den Regler darunter stellst du von −1 bis +1 °C, in der Mitte ist gar kein Fehler (Kontrolle: dann bleiben A und B genau gleich). Den gestrichelten Kreis kannst du in der Karte verschieben.</p>' +
-    '<p><b>Farben</b>: Temperatur in etwa 5 km Höhe, warm im Süden, kalt im Norden. <b>Linien</b>: die Strömung in dieser Höhe – der Wind weht an den Linien entlang, umso stärker, je dichter sie liegen, wie bei Isobaren auf der Wetterkarte. Die dritte Karte zeigt, <b>wo</b> sich A und B unterscheiden.</p>' +
-    '<p>Das <b>Thermometer</b> ist eine Wetterstation: Es misst in beiden Karten die Temperatur an diesem Ort und zeichnet sie auf – schwarz in A, orange in B. Tipp in eine Karte, um die Station zu versetzen.</p>' +
+  controlsNote: '<p>Zwei Karten, <b>A</b> und <b>B</b>, starten mit genau derselben Wetterlage. In B gibt es nur eine kleine <b>Abweichung</b> – so, als hätte man dort etwas ungenau gemessen: einen Fleck so groß wie Deutschland, ein paar Zehntel Grad wärmer oder kälter. Den Regler darunter stellst du von −1 bis +1 °C, in der Mitte gibt es keine Abweichung (Kontrolle: dann bleiben A und B genau gleich). Den gestrichelten Kreis kannst du in der Karte verschieben.</p>' +
+    '<p><b>Farben</b>: Temperatur in etwa 5 km Höhe, warm im Süden, kalt im Norden. <b>Linien</b>: die Strömung in dieser Höhe – der Wind weht an den Linien entlang, umso stärker, je dichter sie liegen, wie bei Isobaren auf der Wetterkarte. Die dritte Karte zeigt, <b>wo</b> sich A und B unterscheiden: weiß, wo beide gleich sind, gelb, wo B wärmer ist, violett, wo B kälter ist. Ihre Farbskala ist nahe 0 gestreckt, damit man auch Zehntelgrade sieht.</p>' +
+    '<p>Das <b>Thermometer</b> ist eine Wetterstation: Es misst in beiden Karten die Temperatur an diesem Ort und zeichnet sie auf – schwarz in A, orange in B. Zieh das Thermometer oder tipp in eine Karte, um die Station zu versetzen.</p>' +
     '<p><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4l14 8-14 8V4z" fill="currentColor" stroke="none"/></svg></span> startet, daneben das <b>Tempo</b>. <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg></span> startet beide noch einmal vom <b>selben</b> Anfang. <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16"/><circle cx="9" cy="9" r="1.5" fill="currentColor" stroke="none"/><circle cx="15" cy="15" r="1.5" fill="currentColor" stroke="none"/></svg></span> nimmt eine andere Wetterlage.</p>',
 
   tasks: {
@@ -41,11 +39,14 @@ window.TEXTS.karte = {
     doneWhere: 'Der Unterschied bleibt nicht, wo er war: Die Strömung trägt ihn mit, und er wächst vor allem dort, wo warme und kalte Luft aufeinandertreffen und sich Wirbel bilden – an den Fronten.',
     station: 'Nach wie vielen Tagen zeigen A und B an der Wetterstation mehr als 2 °C Unterschied?',
     doneStation: d => 'Nach ' + d + ' Tagen. Am Anfang zeigen beide Stationen fast dasselbe Wetter – dann geht es auseinander. Für einen einzelnen Ort geht eine Vorhersage oft schon daneben, wenn die große Wetterlage noch ähnlich aussieht.',
-    apart: 'Wie viele Tage dauert es, bis die Karten so verschieden sind wie zwei zufällige Tage (Unterschied über 50 %)?',
+    apart: 'Wie viele Tage dauert es, bis die Karten so verschieden sind wie die Wetterlagen von zwei zufälligen Tagen?',
     doneApart: d => 'Etwa ' + d + ' Tage. In echten Wettermodellen liegt diese Grenze bei rund zwei Wochen. Dieses Modell ist viel einfacher als die Atmosphäre: Es kennt keine Gewitter, keine Wolken, keine Berge.',
-    smaller: 'Lass die Karten einmal mit einem Messfehler von 1,0 °C laufen und dann noch einmal mit 0,1 °C – 10-mal kleiner. Bleiben sie dann 10-mal länger gleich?',
-    times: list => 'Über 50 % nach: ' + list,
+    smaller: 'Lass die Karten einmal mit einer Abweichung von 1,0 °C laufen und dann noch einmal mit 0,1 °C – 10-mal kleiner. Bleiben sie dann 10-mal länger gleich?',
+    times: list => 'Völlig verschieden nach: ' + list,
     timeItem: (delta, days) => days + ' Tagen (bei ' + delta + ')',
+    place: 'Spielt es eine Rolle, wo die Abweichung sitzt? Setz sie an drei verschiedene Orte – etwa mitten in einen Wirbel, an eine Grenze zwischen warm und kalt und in eine ruhige Gegend – und lass die Karten jeweils laufen, bis sie völlig verschieden sind.',
+    placeTimes: list => 'Völlig verschieden nach: ' + list + ' Tagen',
+    donePlace: (a, b) => 'Zwischen ' + a + ' und ' + b + ' Tagen. An einer Front oder in einem Wirbel wächst die Abweichung anfangs schneller, in einer ruhigen Gegend etwas langsamer. Aber die Strömung trägt sie überall hin – früher oder später werden die Karten an jedem Ort verschieden. Der Ort verschiebt die Grenze um ein paar Tage, aufheben kann er sie nicht.',
     doneSmaller: (a, b, f) => 'Nein – nur etwa ' + a + ' statt ' + b + ' Tage. ' + f + '-mal genauer messen bringt nur einige Tage mehr. Darum verbessern Wetterdienste nicht nur die Messungen, sondern rechnen viele leicht verschiedene Läufe und geben Wahrscheinlichkeiten an.'
   },
 

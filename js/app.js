@@ -308,6 +308,7 @@
     PARAMS.friction = on ? FRICTION : 0;
     frictionBtn.classList.toggle('active', on);
     frictionBtn.setAttribute('aria-pressed', String(on));
+    document.getElementById('friction-label').textContent = t(on ? 'badge.frictionOn' : 'badge.frictionOff');
     hint.show(on ? t('badge.frictionOn') : t('badge.frictionOff'));
     clearTimeout(frictionBtn._t);
     frictionBtn._t = setTimeout(() => { hint.hide(); }, 1800);
