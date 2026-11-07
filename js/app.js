@@ -34,7 +34,7 @@
   let pivotX = 0, pivotY = 0, scale = 1;
 
   const SEG_LEN = 1.0; // meters, per arm
-  const FRICTION = 0.15; // 1/s when the friction button is on
+  const FRICTION = 0.07; // 1/s when the friction button is on
 
   // Resizing the canvas wipes it, so only do that when the stage really
   // changed size -- a phone fires "resize" while scrolling (the address bar

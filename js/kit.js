@@ -50,6 +50,39 @@
   };
   document.querySelectorAll('.stage-frame:not([data-no-fs])').forEach(S.addFullscreen);
 
+  // ---- hover hints (desktop) -------------------------------------------------
+  // A mouse resting on a control for a moment shows a one- or two-word hint.
+  if (window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    const tips = kt('tips') || {};
+    const tipFor = el => el.classList.contains('fs-btn') ? tips.fullscreen
+      : el.classList.contains('info') ? tips.info
+      : tips[el.id || (el.querySelector('select') || {}).id];
+    const box = document.createElement('div');
+    box.className = 'hover-tip'; box.setAttribute('aria-hidden', 'true'); box.hidden = true;
+    document.body.appendChild(box);
+    let timer = 0;
+    const hide = () => { clearTimeout(timer); box.hidden = true; };
+    document.addEventListener('mouseover', e => {
+      const el = e.target.closest && e.target.closest('button, .select-field, input[type=range]');
+      if (!el || el.contains(e.relatedTarget)) return;
+      hide();
+      const text = tipFor(el);
+      if (!text) return;
+      timer = setTimeout(() => {
+        box.textContent = text; box.hidden = false;
+        const r = el.getBoundingClientRect(), w = box.offsetWidth;
+        box.style.left = Math.max(4, Math.min(innerWidth - w - 4, r.left + r.width / 2 - w / 2)) + 'px';
+        box.style.top = (r.bottom + 6) + 'px';
+      }, 600);
+    });
+    document.addEventListener('mouseout', e => {
+      const el = e.target.closest && e.target.closest('button, .select-field, input[type=range]');
+      if (el && !el.contains(e.relatedTarget)) hide();
+    });
+    document.addEventListener('pointerdown', hide);
+    window.addEventListener('scroll', hide, { passive: true });
+  }
+
   // ---- info buttons -------------------------------------------------------
   S.wireInfo = (scope = document) => {
     scope.querySelectorAll('.info[aria-controls]').forEach(btn => {

@@ -41,7 +41,7 @@
 <main class="page">
   <div class="lab">
     <div class="lab-stage">
-      <div class="stage-frame square fit tall-mobile" id="stage-frame">
+      <div class="stage-frame karte-frame" id="stage-frame">
         <div id="stage" role="img" data-t-aria="karte.stageAria">
           <canvas id="draw-canvas"></canvas>
         </div>
@@ -52,11 +52,6 @@
       <div class="readout-grid" aria-live="polite">
         <div><span data-t="readout.status"></span><b id="ro-status" data-t="readout.ready"></b></div>
         <div><span data-t="readout.time"></span><b id="ro-zeit"></b></div>
-      </div>
-
-      <div class="chart-box station-box">
-        <div class="chart-head"><span data-t="karte.station.title"></span> <span class="station-key"><i class="key-a"></i><span data-t="karte.mapA"></span> <i class="key-b"></i><span data-t="karte.mapB"></span></span></div>
-        <canvas id="station-chart" role="img" data-t-aria="karte.station.aria"></canvas>
       </div>
 
       <div class="ctl-row">
@@ -75,7 +70,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg>
         </button>
         <button type="button" class="btn icon" id="sim-new" data-t-aria="lab.newAria">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="4" width="16" height="16"/><circle cx="9" cy="9" r="1.5" fill="currentColor" stroke="none"/><circle cx="15" cy="15" r="1.5" fill="currentColor" stroke="none"/><circle cx="15" cy="9" r="1.5" fill="currentColor" stroke="none"/><circle cx="9" cy="15" r="1.5" fill="currentColor" stroke="none"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/><rect x="8.5" y="8.5" width="7" height="7" stroke-width="1.6"/><circle cx="10.6" cy="10.6" r="0.9" fill="currentColor" stroke="none"/><circle cx="13.4" cy="13.4" r="0.9" fill="currentColor" stroke="none"/></svg>
         </button>
         <button type="button" class="info" aria-controls="controls-help" data-t-aria="controls.infoAria"></button>
       </div>

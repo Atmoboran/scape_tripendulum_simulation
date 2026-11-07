@@ -25,9 +25,6 @@
   const ctx = canvas.getContext('2d');
   const deltaRange = document.getElementById('delta-range');
   const deltaOut = document.getElementById('delta-out');
-  const stationBox = document.querySelector('.station-box');
-  const stationCanvas = document.getElementById('station-chart');
-  const stationCtx = stationCanvas.getContext('2d');
   const tasks = SCAPE.taskDialog('karte-tasks');
   const $ = (id) => document.getElementById(id);
 
@@ -91,7 +88,7 @@
     },
     render,
     onSample(l) { recordStation(); checkTasks(l); },
-    drawCharts: (tMax) => { if (!stationInStage) drawStationChart(stationCtx, null, tMax); }
+    drawCharts: () => {}
   };
 
   // ============ TEMPERATURE AT ONE PLACE ============
@@ -303,22 +300,21 @@
   }
 
   // Where the tiles go. Wide stages: 2 × 2 -- A, B, difference and the
-  // station's chart. Narrow ones (phones): the three maps in a column, the
-  // chart under the stage.
-  let stationInStage = false;
+  // station's chart. Narrow ones (phones): A, B and the station's chart in a
+  // column (the difference map is left out there).
   function arrange(x0, y0, w, h) {
     const lab = fs * 1.6, gap = Math.max(10, fs);
     const col = Math.min(w, ((h - 3 * lab - 2 * gap) / 3) * ASPECT);
     const grid = Math.min((w - gap) / 2, ((h - 2 * lab - gap) / 2) * ASPECT);
     if (grid >= col * 0.9 && W > 560) {
       const mw = grid, mh = mw / ASPECT;
-      const left = x0 + (w - 2 * mw - gap) / 2, top = y0;
+      const left = x0 + (w - 2 * mw - gap) / 2, top = y0 + Math.max(0, (h - 2 * (mh + lab) - gap) / 2);
       const at = (c, r) => ({ x0: left + c * (mw + gap), y0: top + lab + r * (mh + lab + gap), w: mw, h: mh });
       return [Object.assign(at(0, 0), { kind: 'a' }), Object.assign(at(1, 0), { kind: 'b' }), Object.assign(at(0, 1), { kind: 'diff' }), Object.assign(at(1, 1), { kind: 'station' })];
     }
     const mw = col, mh = mw / ASPECT;
     const left = x0 + (w - mw) / 2, top = y0 + Math.max(0, (h - 3 * (mh + lab) - 2 * gap) / 2);
-    return ['a', 'b', 'diff'].map((kind, r) => ({ kind, x0: left, y0: top + lab + r * (mh + lab + gap), w: mw, h: mh }));
+    return ['a', 'b', 'station'].map((kind, r) => ({ kind, x0: left, y0: top + lab + r * (mh + lab + gap), w: mw, h: mh }));
   }
 
   let maps = [];
@@ -327,19 +323,19 @@
     ctx.clearRect(0, 0, W, H);
     // text grows with the stage: 11 px on a phone up to 18 px on a big screen
     fs = Math.max(11, Math.min(18, Math.min(W, H * 1.4) / 52));
-    const tiles = arrange(12, 6, W - 24, H - 6 - fs * 2.6);
+    // room at the bottom for the full-screen button
+    const tiles = arrange(12, 4, W - 24, H - 4 - 46);
     maps = tiles.filter((m) => m.kind !== 'station');
     maps.forEach((m) => drawMap(m, mode));
     const st = tiles.find((m) => m.kind === 'station');
-    if (stationInStage !== !!st) { stationInStage = !!st; stationBox.hidden = stationInStage; }
     if (st) drawStationChart(ctx, st, Math.max(model.chartDays, Math.ceil(model.day() / 10) * 10));
-    // the scale bar under the lowest map
-    const last = maps.reduce((a, b) => (b.y0 + b.h > a.y0 + a.h ? b : a));
-    ctx.fillStyle = INK; ctx.font = font(0.95); ctx.textBaseline = 'top';
-    const km = 1e6 / P.L * last.w;
-    ctx.fillRect(last.x0, last.y0 + last.h + 8, km, 3);
-    ctx.textAlign = 'left';
-    ctx.fillText(t('karte.km'), last.x0 + km + 6, last.y0 + last.h + 3);
+    // the scale bar at the right end of map B's title row
+    const mb = maps.find((m) => m.kind === 'b');
+    const km = 1e6 / P.L * mb.w;
+    ctx.fillStyle = INK; ctx.font = font(0.95); ctx.textBaseline = 'bottom'; ctx.textAlign = 'right';
+    ctx.fillText(t('karte.km'), mb.x0 + mb.w, mb.y0 - 4);
+    const kw = ctx.measureText(t('karte.km')).width;
+    ctx.fillRect(mb.x0 + mb.w - kw - 6 - km, mb.y0 - 4 - fs * 0.5, km, 3);
   }
   // A small colour bar at the right end of a map's title row:
   // "−35 °C [bar] +35 °C"; the difference bar carries ticks at ±1 and 0.
@@ -372,7 +368,7 @@
 
   // ============ STATION CHART ============
   // Temperature at the station in A (black) and B (orange) over the days.
-  // Drawn into its own canvas under the stage, or into the 4th tile.
+  // Drawn into its own tile on the stage.
   function drawStationChart(g, tile, tMax) {
     let x0 = 0, y0 = 0, w, h;
     if (tile) {
@@ -381,6 +377,8 @@
       g.strokeStyle = INK; g.lineWidth = 1.5; g.strokeRect(x0, y0, w, h);
       g.fillStyle = INK; g.font = font(1.15); g.textAlign = 'left'; g.textBaseline = 'bottom';
       g.fillText(t('karte.station.title'), x0, y0 - 4);
+      // the same thermometer as on the maps, so the two belong together
+      thermometer(x0 + g.measureText(t('karte.station.title')).width + fs * 0.7, y0 - 5, Math.max(0.7, fs / 16), window.THEME.tempColor(0.8));
       // the key, top right above the tile
       g.font = font(0.95); g.textAlign = 'right';
       g.fillText(t('karte.mapB'), x0 + w, y0 - 4);
@@ -389,12 +387,6 @@
       g.fillStyle = INK; g.fillText(t('karte.mapA'), x0 + w - kb - 34, y0 - 4);
       const ka = g.measureText(t('karte.mapA')).width;
       g.fillRect(x0 + w - kb - ka - 60, y0 - 4 - fs * 0.55, 18, 3);
-    } else {
-      const r = stationCanvas.getBoundingClientRect();
-      w = r.width; h = r.height;
-      if (stationCanvas.width !== Math.round(w * dpr)) { stationCanvas.width = Math.round(w * dpr); stationCanvas.height = Math.round(h * dpr); }
-      g.setTransform(dpr, 0, 0, dpr, 0, 0);
-      g.clearRect(0, 0, w, h);
     }
     const f = tile ? fs : 11;
     const padL = f * 4.6, padR = 10, padT = 10, padB = f * 2.1;

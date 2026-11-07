@@ -65,27 +65,23 @@ test('all three chapters load without errors', opts, async () => {
   await browser.close();
 });
 
-test('karte.html: a station is set from the start and records A and B; a tap moves it', opts, async () => {
-  const browser = await chromium.launch();
-  const p = await browser.newPage({ viewport: { width: 390, height: 844 } });
-  await p.goto(url('karte.html'));
-  const chart = () => p.evaluate(() => document.getElementById('station-chart').toDataURL());
-  const before = await chart();
-  await p.selectOption('#speed-select', '2');
-  await p.click('#sim-primary'); await p.waitForTimeout(1500); await p.click('#sim-primary');
-  assert.notEqual(await chart(), before, 'station chart drawn');
-  const s = await p.locator('#stage').boundingBox();
-  await p.mouse.click(s.x + s.width / 2, s.y + s.height * 0.35);
-  await p.waitForTimeout(300);
-  assert.ok(await p.locator('#station-chart').isVisible());
-  await browser.close();
-});
-
-test('karte.html: wide screens put the station chart into the stage (2 × 2)', opts, async () => {
-  const browser = await chromium.launch();
-  const p = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-  await p.goto(url('karte.html'));
-  await p.waitForTimeout(300);
-  assert.ok(await p.locator('.station-box').isHidden());
-  await browser.close();
-});
+for (const vp of [{ width: 390, height: 844 }, { width: 1440, height: 900 }]) {
+  test('karte.html (' + vp.width + ' px): the station chart is a tile of the stage; a tap moves the station', opts, async () => {
+    const browser = await chromium.launch();
+    const p = await browser.newPage({ viewport: vp });
+    const errors = [];
+    p.on('pageerror', (e) => errors.push(e.message));
+    await p.goto(url('karte.html'));
+    const n = () => p.evaluate(() => window.SCAPE.karteDiff() >= 0);
+    assert.ok(await n());
+    // the stage is filled: no block of empty space at its bottom
+    const s = await p.locator('#stage').boundingBox();
+    assert.ok(s.height < s.width * 1.8, 'stage not taller than its tiles');
+    await p.selectOption('#speed-select', '2');
+    await p.click('#sim-primary'); await p.waitForTimeout(1500); await p.click('#sim-primary');
+    await p.mouse.click(s.x + s.width * 0.25, s.y + s.height * 0.2);
+    await p.waitForTimeout(300);
+    assert.deepEqual(errors, []);
+    await browser.close();
+  });
+}

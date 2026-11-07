@@ -17,7 +17,20 @@ window.TEXTS = {
     fullscreenExit: 'Vollbild beenden',
     infoAria: 'Erklärung anzeigen',
     merkeLocked: 'Löse die Aufgaben – dann erscheint hier, was du herausgefunden hast.',
-    devLink: '(dev)'
+    devLink: '(dev)',
+    // short hover hints on the desktop (mouse resting on a control)
+    tips: {
+      'sim-primary': 'Start / Pause',
+      'sim-reset': 'Neustart vom selben Anfang',
+      'sim-new': 'Andere Wetterlage',
+      'sim-friction': 'Reibung an/aus',
+      'sim-ensemble': 'Ensemble',
+      'speed-select': 'Tempo',
+      'delta-select': 'Unterschied am Start',
+      'delta-range': 'Abweichung in Karte B',
+      info: 'Erklärung',
+      fullscreen: 'Vollbild'
+    }
   },
 
   chapters: {
