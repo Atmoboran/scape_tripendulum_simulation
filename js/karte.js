@@ -323,8 +323,7 @@
     ctx.clearRect(0, 0, W, H);
     // text grows with the stage: 11 px on a phone up to 18 px on a big screen
     fs = Math.max(11, Math.min(18, Math.min(W, H * 1.4) / 52));
-    // room at the bottom for the full-screen button
-    const tiles = arrange(12, 4, W - 24, H - 4 - 46);
+    const tiles = arrange(12, 4, W - 24, H - 4 - 10);
     maps = tiles.filter((m) => m.kind !== 'station');
     maps.forEach((m) => drawMap(m, mode));
     const st = tiles.find((m) => m.kind === 'station');

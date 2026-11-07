@@ -18,6 +18,7 @@ window.TEXTS = {
     infoAria: 'Erklärung anzeigen',
     merkeLocked: 'Löse die Aufgaben – dann erscheint hier, was du herausgefunden hast.',
     devLink: '(dev)',
+    closeAria: 'Schließen',
     // short hover hints on the desktop (mouse resting on a control)
     tips: {
       'sim-primary': 'Start / Pause',

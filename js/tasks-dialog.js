@@ -1,4 +1,4 @@
-// Tasks as a pop-up, the same shape as in the other SCAPE° exhibits: a
+// Tasks as a pop-up (on the desktop: unfolding under the button), the same shape as in the other SCAPE° exhibits: a
 // full-width "Aufgaben" button with the progress on its right end, opening a
 // modal with a numbered list. Items check themselves off while the visitor
 // plays; the solved line under an item appears once it is done.
@@ -22,13 +22,28 @@
     };
     update();
 
-    // A click on the dimmed backdrop closes it, Esc does it for free.
-    openBtn.addEventListener('click', () => {
-      if (dialog.showModal) dialog.showModal(); else dialog.setAttribute('open', '');
-    });
-    const close = () => { if (dialog.close) dialog.close(); else dialog.removeAttribute('open'); };
-    closeBtn.addEventListener('click', close);
-    dialog.addEventListener('click', (e) => { if (e.target === dialog) close(); });
+    if (document.documentElement.dataset.view === 'desktop') {
+      // Desktop: the list unfolds right under the button instead.
+      const drop = document.createElement('div');
+      drop.className = 'tasks-drop'; drop.id = 'tasks-drop'; drop.hidden = true;
+      [...dialog.children].forEach((el) => { if (!el.classList.contains('quiz-head')) drop.appendChild(el); });
+      openBtn.after(drop);
+      openBtn.removeAttribute('aria-haspopup');
+      openBtn.setAttribute('aria-controls', 'tasks-drop');
+      openBtn.setAttribute('aria-expanded', 'false');
+      openBtn.addEventListener('click', () => {
+        drop.hidden = !drop.hidden;
+        openBtn.setAttribute('aria-expanded', String(!drop.hidden));
+      });
+    } else {
+      // A click on the dimmed backdrop closes it, Esc does it for free.
+      openBtn.addEventListener('click', () => {
+        if (dialog.showModal) dialog.showModal(); else dialog.setAttribute('open', '');
+      });
+      const close = () => { if (dialog.close) dialog.close(); else dialog.removeAttribute('open'); };
+      closeBtn.addEventListener('click', close);
+      dialog.addEventListener('click', (e) => { if (e.target === dialog) close(); });
+    }
 
     // A freshly solved task makes the button blink once, so the visitor
     // notices it without a message over the picture.
