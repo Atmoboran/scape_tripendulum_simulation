@@ -300,21 +300,26 @@
   }
 
   // Where the tiles go. Wide stages: 2 × 2 -- A, B, difference and the
-  // station's chart. Narrow ones (phones): A, B and the station's chart in a
-  // column (the difference map is left out there).
+  // station's chart. Narrow ones (phones): A, B and a third tile in a column;
+  // two tabs above it switch between the station's chart and the difference.
+  let third = 'station';
+  let tabs = null;                     // phones: where the two tabs are
   function arrange(x0, y0, w, h) {
     const lab = fs * 1.6, gap = Math.max(10, fs);
     const col = Math.min(w, ((h - 3 * lab - 2 * gap) / 3) * ASPECT);
     const grid = Math.min((w - gap) / 2, ((h - 2 * lab - gap) / 2) * ASPECT);
     if (grid >= col * 0.9 && W > 560) {
+      tabs = null;
       const mw = grid, mh = mw / ASPECT;
       const left = x0 + (w - 2 * mw - gap) / 2, top = y0 + Math.max(0, (h - 2 * (mh + lab) - gap) / 2);
       const at = (c, r) => ({ x0: left + c * (mw + gap), y0: top + lab + r * (mh + lab + gap), w: mw, h: mh });
       return [Object.assign(at(0, 0), { kind: 'a' }), Object.assign(at(1, 0), { kind: 'b' }), Object.assign(at(0, 1), { kind: 'diff' }), Object.assign(at(1, 1), { kind: 'station' })];
     }
-    const mw = col, mh = mw / ASPECT;
-    const left = x0 + (w - mw) / 2, top = y0 + Math.max(0, (h - 3 * (mh + lab) - 2 * gap) / 2);
-    return ['a', 'b', 'station'].map((kind, r) => ({ kind, x0: left, y0: top + lab + r * (mh + lab + gap), w: mw, h: mh }));
+    const tabH = fs * 2.2;
+    const mw = Math.min(w, ((h - 3 * lab - 2 * gap - tabH) / 3) * ASPECT), mh = mw / ASPECT;
+    const left = x0 + (w - mw) / 2, top = y0 + Math.max(0, (h - 3 * (mh + lab) - 2 * gap - tabH) / 2);
+    tabs = { x0: left, y0: top + 2 * (mh + lab + gap), w: mw, h: tabH - 6 };
+    return ['a', 'b', third].map((kind, r) => ({ kind, x0: left, y0: top + lab + r * (mh + lab + gap) + (r === 2 ? tabH : 0), w: mw, h: mh }));
   }
 
   let maps = [];
@@ -328,6 +333,7 @@
     maps.forEach((m) => drawMap(m, mode));
     const st = tiles.find((m) => m.kind === 'station');
     if (st) drawStationChart(ctx, st, Math.max(model.chartDays, Math.ceil(model.day() / 10) * 10));
+    if (tabs) drawTabs();
     // the scale bar at the right end of map B's title row
     const mb = maps.find((m) => m.kind === 'b');
     const km = 1e6 / P.L * mb.w;
@@ -335,6 +341,18 @@
     ctx.fillText(t('karte.km'), mb.x0 + mb.w, mb.y0 - 4);
     const kw = ctx.measureText(t('karte.km')).width;
     ctx.fillRect(mb.x0 + mb.w - kw - 6 - km, mb.y0 - 4 - fs * 0.5, km, 3);
+  }
+  // Phones: two tabs above the third tile -- station chart | difference.
+  function drawTabs() {
+    const half = (tabs.w - 6) / 2;
+    [['station', 'karte.station.title'], ['diff', 'karte.mapDiff']].forEach(([kind, key], i) => {
+      const x = tabs.x0 + i * (half + 6), on = third === kind;
+      ctx.fillStyle = on ? INK : '#fff'; ctx.fillRect(x, tabs.y0, half, tabs.h);
+      ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.strokeRect(x, tabs.y0, half, tabs.h);
+      ctx.fillStyle = on ? '#fff' : INK; ctx.font = font(0.95, 600);
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(t(key), x + half / 2, tabs.y0 + tabs.h / 2);
+    });
   }
   // A small colour bar at the right end of a map's title row:
   // "−35 °C [bar] +35 °C"; the difference bar carries ticks at ±1 and 0.
@@ -434,7 +452,13 @@
   const local = (e) => { const r = stage.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
   const mapAt = (x, y) => maps.find((m) => x >= m.x0 && x <= m.x0 + m.w && y >= m.y0 && y <= m.y0 + m.h);
   stage.addEventListener('pointerdown', (e) => {
-    const [x, y] = local(e), m = mapAt(x, y);
+    const [x, y] = local(e);
+    if (tabs && y >= tabs.y0 && y <= tabs.y0 + tabs.h && x >= tabs.x0 && x <= tabs.x0 + tabs.w) {
+      third = x < tabs.x0 + tabs.w / 2 ? 'station' : 'diff';
+      lab.frame();
+      return;
+    }
+    const m = mapAt(x, y);
     if (!m) return;
     let onBubble = false;
     if (lab.mode === 'setup' && delta !== 0 && m.kind !== 'a') {
