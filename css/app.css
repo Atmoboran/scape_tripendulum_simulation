@@ -115,7 +115,6 @@
 .quiz-item.done .quiz-feedback { background: var(--c-pale-green); padding: 8px 10px; }
 
 /* ---- the line about the other chaos exhibits, and the way on ---- */
-.more-chaos { margin: 22px 0 0; }
 .next-part .btn { text-decoration: none; }
 .next-part.back { justify-content: flex-start; }
 

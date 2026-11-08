@@ -240,3 +240,10 @@ details.topic[open] > summary::after { content: "−"; background: var(--active)
 .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border: var(--line-width) solid var(--line); font-weight: var(--fw-medium); font-size: 12px; letter-spacing: .04em; text-transform: var(--caps); }
 .muted { color: var(--ink-muted); }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* phones: a compact poster (about half as tall), so the stage and its
+   start row show without scrolling */
+:root[data-view="mobile"] .poster, :root[data-view="mobile"] .poster.small { padding: 12px var(--gutter) 42px; }
+:root[data-view="mobile"] .poster .headline { font-size: 28px; margin-bottom: 6px; }
+:root[data-view="mobile"] .poster .lead { font-size: 14px; line-height: 1.35; }
+:root[data-view="mobile"] .poster .f2, :root[data-view="mobile"] .poster .f3 { height: 32px; }
+:root[data-view="mobile"] .poster .l2 { width: 44px; height: 44px; left: calc(58% - 22px); bottom: 10px; }
