@@ -17,7 +17,7 @@ for (const page of ['karte.html']) {
     const errors = [];
     p.on('pageerror', (e) => errors.push(e.message));
     await p.goto(url(page));
-    const time = async () => num(await p.locator('#ro-zeit').textContent());
+    const time = async () => p.evaluate(() => window.SCAPE.karteDay());
     const diff = async () => p.evaluate(() => window.SCAPE.karteDiff());
     assert.equal(await time(), 0);
     const d0 = await diff();
@@ -26,7 +26,6 @@ for (const page of ['karte.html']) {
     await p.click('#sim-primary'); await p.waitForTimeout(200);
     const tp = await time(); await p.waitForTimeout(600);
     assert.equal(await time(), tp, 'pause holds');
-    assert.equal(await p.locator('#ro-status').textContent(), 'Pausiert');
     await p.click('#sim-reset');
     assert.equal(await time(), 0);
     assert.equal(await diff(), d0, 'restart gives the same start difference');

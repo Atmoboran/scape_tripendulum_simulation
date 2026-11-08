@@ -31,7 +31,7 @@ test('all chapters work offline after the first visit', { skip: chromium ? false
     }
     // and it still computes
     await p.click('#sim-primary'); await p.waitForTimeout(1000);
-    assert.ok(parseFloat((await p.locator('#ro-zeit').textContent()).replace(',', '.')) > 0);
+    assert.ok(await p.evaluate(() => window.SCAPE.karteDay ? window.SCAPE.karteDay() : parseFloat(document.getElementById('ro-zeit').textContent.replace(',', '.'))) > 0);
     await browser.close();
   } finally {
     server.kill();

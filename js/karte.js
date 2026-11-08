@@ -552,7 +552,8 @@
   layout();
   lab = SCAPE.chaosLab(model);
   lab.restart();
-  // for the tests: the relative difference of the two maps (no longer shown)
+  // for the tests: difference and model time (no longer shown on the page)
   SCAPE.karteDiff = () => model.diff();
+  SCAPE.karteDay = () => model.day();
   window.addEventListener('resize', () => { W = 0; lab.frame(); });
 })();

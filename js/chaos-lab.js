@@ -123,7 +123,7 @@
     function setPrimary(key, icon) { primaryBtn.setAttribute('aria-label', t(key)); primaryIcon.innerHTML = icon; }
 
     function readout() {
-      roZeit.textContent = t('lab.days', lab.fmtDays(model.day()));
+      if (roZeit) roZeit.textContent = t('lab.days', lab.fmtDays(model.day()));
       if (roDiff) roDiff.textContent = lab.fmtPercent(model.diff());
     }
 
@@ -198,7 +198,7 @@
     function run() {
       lab.mode = 'run';
       running = true;
-      roStatus.textContent = t('readout.running');
+      if (roStatus) roStatus.textContent = t('readout.running');
       setPrimary('lab.pauseAria', ICON_PAUSE);
       lastT = performance.now(); carry = 0;
       requestAnimationFrame(loop);
@@ -206,7 +206,7 @@
     function pause() {
       lab.mode = 'paused';
       running = false;
-      roStatus.textContent = t('readout.paused');
+      if (roStatus) roStatus.textContent = t('readout.paused');
       setPrimary('lab.resumeAria', ICON_PLAY);
       frame();
     }
@@ -220,7 +220,7 @@
       lab.steps = 0;
       model.restart();
       lab.rec.push(model.day(), model.diff());
-      roStatus.textContent = t('readout.ready');
+      if (roStatus) roStatus.textContent = t('readout.ready');
       setPrimary('lab.startAria', ICON_PLAY);
       frame();
     };
