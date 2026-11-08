@@ -21,9 +21,10 @@
   const hint = SCAPE.badge(stageFrame);
   const tasks = SCAPE.taskDialog('tp-tasks');
   const precisionBest = document.getElementById('precision-best');
-  const roStatus = document.getElementById('ro-status');
-  const roZeit = document.getElementById('ro-zeit');
-  const roDist = document.getElementById('ro-dist');
+  // the status line was taken out; its fields live on off-page
+  const roStatus = document.getElementById('ro-status') || document.createElement('b');
+  const roZeit = document.getElementById('ro-zeit') || document.createElement('b');
+  const roDist = document.getElementById('ro-dist') || document.createElement('b');
 
   const modeSelect = document.getElementById('mode-select');
   const editorABtn = document.getElementById('editor-a');

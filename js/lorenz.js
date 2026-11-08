@@ -68,10 +68,11 @@
   const resetBtn = document.getElementById('sim-reset');
   const ensembleBtn = document.getElementById('sim-ensemble');
   const deltaSelect = document.getElementById('delta-select');
-  const roStatus = document.getElementById('ro-status');
-  const roZeit = document.getElementById('ro-zeit');
-  const roDist = document.getElementById('ro-dist');
-  const roDistLabel = document.getElementById('ro-dist-label');
+  // the status line was taken out; its fields live on off-page
+  const roStatus = document.getElementById('ro-status') || document.createElement('b');
+  const roZeit = document.getElementById('ro-zeit') || document.createElement('b');
+  const roDist = document.getElementById('ro-dist') || document.createElement('b');
+  const roDistLabel = document.getElementById('ro-dist-label') || document.createElement('b');
   const legend = stageFrame.querySelector('.pick-ctl');
   const hint = SCAPE.badge(stageFrame);
   const tasks = SCAPE.taskDialog('lz-tasks');

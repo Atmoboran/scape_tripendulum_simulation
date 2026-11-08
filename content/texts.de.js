@@ -114,7 +114,7 @@ window.TEXTS = {
   },
   controls: {
     infoAria: 'Bedienung erklären',
-    note: '<p>Stell Rot und Blau per Fingerzug ein – fast gleich oder ganz verschieden. Tipp dazu auf ein Pendel oder oben links auf <b>Rot</b> / <b>Blau</b>. <b>Abstand</b> zeigt, wie weit die beiden unteren Kugeln auseinander sind.</p>' +
+    note: '<p>Stell Rot und Blau per Fingerzug ein – fast gleich oder ganz verschieden. Tipp dazu auf ein Pendel oder oben links auf <b>Rot</b> / <b>Blau</b>.</p>' +
       '<p><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4l14 8-14 8V4z" fill="currentColor" stroke="none"/></svg></span> lässt beide Pendel los, dann <b>Pause</b> und <b>Weiter</b>. Schau, wie sich ihre Wege trennen – die Spuren verblassen mit der Zeit.</p>' +
       '<p><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg></span> holt die Pendel zurück an ihren Start – so kannst du fein nachjustieren. Noch einmal gedrückt hängen beide wieder gerade nach unten.</p>' +
       '<p><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12c1.5-9 3.5-9 5 0s3 6 4.5 0 2.5-4 3.5 0 2 2.5 3 0 1.5-1 2.5 0"/></svg></span> schaltet die <b>Reibung</b> an oder aus. Ohne Reibung schwingt das Pendel ewig – ein Modell. Echte Pendel werden langsamer und kommen zur Ruhe; das Chaos am Anfang bleibt.</p>'
