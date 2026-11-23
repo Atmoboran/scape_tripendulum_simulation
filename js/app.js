@@ -279,6 +279,7 @@
     stateB = zeroState(n);
     startA = startB = null;
     modeSelect.value = String(n);
+    document.querySelectorAll('.mode-pick').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.n === n)));
     layout(true);
     render();
   }
@@ -301,6 +302,8 @@
   }
 
   modeSelect.addEventListener('change', () => { selectPendulumType(+modeSelect.value); });
+  // the pendulum type as pictograms: one arm, two, three, four
+  document.querySelectorAll('.mode-pick').forEach((b) => b.addEventListener('click', () => { modeSelect.value = b.dataset.n; selectPendulumType(+b.dataset.n); }));
   editorABtn.addEventListener('click', () => { if (mode === STATE_SETUP) setEditor('A'); });
   editorBBtn.addEventListener('click', () => { if (mode === STATE_SETUP) setEditor('B'); });
 

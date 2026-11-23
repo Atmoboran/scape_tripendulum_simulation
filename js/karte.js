@@ -55,9 +55,11 @@
   const fmtDelta = (v) => (v === 0 ? t('karte.delta.none') : fmtC(v));
   let delta = +deltaRange.value / 10;
   let A, B;
-  let bubble = { x: 0.35 * P.L, y: 0.5 * P.W };
+  // the deviation spots in B (one to five), all with the slider's value
+  let bubbles = [{ x: 0.35 * P.L, y: 0.5 * P.W }];
+  const MAX_SPOTS = 5;
   // a station from the start, a little downstream (east) of the error
-  let station = { x: bubble.x + 1.2e6, y: bubble.y };
+  let station = { x: bubbles[0].x + 1.2e6, y: bubbles[0].y };
   let rec = { t: [], a: [], b: [] };  // station recording
   let cache = { t: -1, e: 0 };
   const model = {
@@ -73,7 +75,7 @@
       const [q1, q2] = startState();
       A = new QG.Model().setQ(q1, q2);
       B = A.clone();
-      if (delta !== 0) B.perturbTemperature(bubble.x, bubble.y, RADIUS, delta / QG.KELVIN);
+      if (delta !== 0) bubbles.forEach((q) => B.perturbTemperature(q.x, q.y, RADIUS, delta / QG.KELVIN));
       cache.t = -1;
       passed = false; stationPassed = false;
       rec = { t: [], a: [], b: [] };
@@ -160,8 +162,8 @@
   }
   const idx = (v, range) => Math.max(0, Math.min(255, Math.round((v / range + 1) / 2 * 255)));
   // The difference is stretched near 0 (power 0.3, with or without sign),
-  // so a 0,1 °C start is visible -- below 0,005 °C it stays plain white.
-  const D_POW = 0.3, D_MIN = 0.005;
+  // so a 0,1 °C start is visible -- below 0,03 °C it stays plain white.
+  const D_POW = 0.3, D_MIN = 0.03;
   const dScale = (v) => { const a = Math.abs(v); return a <= D_MIN ? 0 : Math.sign(v) * Math.min(1, ((a - D_MIN) / (D_RANGE - D_MIN)) ** D_POW); };
   const idxD = (v) => Math.round((dScale(v) + 1) / 2 * 255);
 
@@ -276,11 +278,13 @@
     if (m.kind !== 'b') colourBar(m, m.kind === 'diff' ? 'diff' : 'temp');
     // the measurement error before the start (in B and the difference)
     if (mode === 'setup' && m.kind !== 'a' && delta !== 0) {
-      const [bx, by] = toScreen(m, bubble.x, bubble.y), r = Math.max(RADIUS / P.L * m.w, 8);
-      ctx.strokeStyle = INK; ctx.setLineDash([4, 4]); ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(bx, by, r, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
-      ctx.font = font(1, 600); ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-      ctx.fillText(fmtDelta(delta), bx, by - r - 3);
+      bubbles.forEach((q) => {
+        const [bx, by] = toScreen(m, q.x, q.y), r = Math.max(RADIUS / P.L * m.w, 8);
+        ctx.strokeStyle = INK; ctx.setLineDash([4, 4]); ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(bx, by, r, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = INK; ctx.font = font(1, 600); ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        ctx.fillText(fmtDelta(delta), bx, by - r - 3);
+      });
     }
     // the weather station: a thermometer with its reading -- in the
     // difference map the difference B − A
@@ -446,6 +450,21 @@
   }
   deltaRange.addEventListener('input', () => { setDelta(); lab.restart(); });
 
+  // more deviation spots: each new one 3000 km east of the last (wrapping)
+  const spotAdd = $('spot-add'), spotRemove = $('spot-remove');
+  function setSpots(list) {
+    bubbles = list;
+    spotAdd.disabled = bubbles.length >= MAX_SPOTS;
+    spotRemove.disabled = bubbles.length <= 1;
+    $('spot-count').textContent = t('karte.spots.count', bubbles.length);
+    lab.restart();
+  }
+  spotAdd.addEventListener('click', () => {
+    const last = bubbles[bubbles.length - 1];
+    setSpots(bubbles.concat({ x: (last.x + 3e6) % P.L, y: (bubbles.length % 2 ? 0.35 : 0.6) * P.W }));
+  });
+  spotRemove.addEventListener('click', () => setSpots(bubbles.slice(0, -1)));
+
   // Drag the error spot (before the start), tap anywhere on a map to move
   // the weather station there.
   let press = null;
@@ -460,15 +479,15 @@
     }
     const m = mapAt(x, y);
     if (!m) return;
-    let onBubble = false;
+    let onBubble = false, bi = -1;
     if (lab.mode === 'setup' && delta !== 0 && m.kind !== 'a') {
-      const [bx, by] = toScreen(m, bubble.x, bubble.y);
-      onBubble = Math.hypot(x - bx, y - by) < Math.max(RADIUS / P.L * m.w, 8) + 14;
+      bi = bubbles.findIndex((q) => { const [bx, by] = toScreen(m, q.x, q.y); return Math.hypot(x - bx, y - by) < Math.max(RADIUS / P.L * m.w, 8) + 14; });
+      onBubble = bi >= 0;
     }
     // the thermometer can be dragged too, at any time
     const [sx, sy] = toScreen(m, station.x, station.y);
     const onStation = !onBubble && Math.abs(x - sx) < 16 && y > sy - 34 && y < sy + 10;
-    press = { x, y, m, onBubble, onStation, moved: false };
+    press = { x, y, m, onBubble, bi, onStation, moved: false };
     if (onBubble || onStation) { stage.setPointerCapture(e.pointerId); e.preventDefault(); }
   });
   stage.addEventListener('pointermove', (e) => {
@@ -477,7 +496,7 @@
     if (Math.hypot(x - press.x, y - press.y) > 4) press.moved = true;
     const [mx, my] = toModel(press.m, x, y);
     const at = { x: ((mx % P.L) + P.L) % P.L, y: Math.max(0, Math.min(P.W - DY, my)) };
-    if (press.onBubble) bubble = at; else moveStation(at);
+    if (press.onBubble) bubbles[press.bi] = at; else moveStation(at);
     lab.frame();
   });
   stage.addEventListener('pointerup', (e) => {
@@ -507,6 +526,8 @@
   // 5: the same error at three places at least 1500 km apart.
   const times = {}, places = [];
   function notePlace(l, day) {
+    if (bubbles.length !== 1) return;          // the place task needs one spot
+    const bubble = bubbles[0];
     const near = (q) => Math.hypot(Math.min(Math.abs(q.x - bubble.x), P.L - Math.abs(q.x - bubble.x)), q.y - bubble.y) < 1.5e6;
     const known = places.find(near);
     if (known) known.day = day; else places.push({ x: bubble.x, y: bubble.y, day });
@@ -551,7 +572,7 @@
   setDelta();
   layout();
   lab = SCAPE.chaosLab(model);
-  lab.restart();
+  setSpots(bubbles);
   // for the tests: difference and model time (no longer shown on the page)
   SCAPE.karteDiff = () => model.diff();
   SCAPE.karteDay = () => model.day();

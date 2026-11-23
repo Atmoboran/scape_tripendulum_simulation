@@ -29,6 +29,8 @@ window.TEXTS = {
       'speed-select': 'Tempo',
       'delta-select': 'Unterschied am Start',
       'delta-range': 'Abweichung in Karte B',
+      'spot-add': 'Punkt dazu',
+      'spot-remove': 'Punkt weg',
       info: 'Erklärung',
       fullscreen: 'Vollbild'
     }

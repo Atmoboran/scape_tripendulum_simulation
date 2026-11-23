@@ -56,6 +56,7 @@
     const tips = kt('tips') || {};
     const tipFor = el => el.classList.contains('fs-btn') ? tips.fullscreen
       : el.classList.contains('info') ? tips.info
+      : el.classList.contains('mode-pick') ? el.getAttribute('aria-label')
       : tips[el.id || (el.querySelector('select') || {}).id];
     const box = document.createElement('div');
     box.className = 'hover-tip'; box.setAttribute('aria-hidden', 'true'); box.hidden = true;

@@ -79,6 +79,11 @@
         </div>
         <input type="range" id="delta-range" min="-10" max="10" step="1" value="5">
         <div class="strength-scale" aria-hidden="true"><span data-t="karte.delta.scaleLow"></span><span data-t="karte.delta.scaleMid"></span><span data-t="karte.delta.scaleHigh"></span></div>
+        <div class="spots">
+          <span id="spot-count"></span>
+          <button type="button" class="btn spot-btn" id="spot-remove" data-t-aria="karte.spots.removeAria">−</button>
+          <button type="button" class="btn spot-btn" id="spot-add" data-t-aria="karte.spots.addAria">+</button>
+        </div>
       </div>
 
       <div class="info-note" id="controls-help" hidden data-t-html="karte.controlsNote"></div>

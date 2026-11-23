@@ -74,15 +74,15 @@
       </div>
 
       <div class="ctl-row">
-        <label class="select-field">
-          <span class="select-label" data-t="labels.type"></span>
-          <select id="mode-select">
-            <option value="1" data-t="labels.simple"></option>
-            <option value="2" data-t="labels.double" selected></option>
-            <option value="3" data-t="labels.triple"></option>
-            <option value="4" data-t="labels.quad"></option>
-          </select>
-        </label>
+        <div class="mode-picks" role="group" data-t-aria="labels.type">
+          <button type="button" class="btn icon mode-pick" data-n="1" aria-pressed="false" data-t-aria="labels.simple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3.5h10"/><path d="M12 3.5 L21.7 19.3"/><circle cx="21.7" cy="19.3" r="2.4" fill="currentColor" stroke="none"/></svg></button>
+          <button type="button" class="btn icon mode-pick" data-n="2" aria-pressed="true" data-t-aria="labels.double"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3.5h10"/><path d="M12 3.5 L16.8 11.4 L12.0 19.3"/><circle cx="16.8" cy="11.4" r="2.4" fill="currentColor" stroke="none"/><circle cx="12.0" cy="19.3" r="2.4" fill="currentColor" stroke="none"/></svg></button>
+          <button type="button" class="btn icon mode-pick" data-n="3" aria-pressed="false" data-t-aria="labels.triple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3.5h10"/><path d="M12 3.5 L15.2 8.8 L12.0 14.0 L15.2 19.3"/><circle cx="15.2" cy="8.8" r="2.0" fill="currentColor" stroke="none"/><circle cx="12.0" cy="14.0" r="2.0" fill="currentColor" stroke="none"/><circle cx="15.2" cy="19.3" r="2.0" fill="currentColor" stroke="none"/></svg></button>
+          <button type="button" class="btn icon mode-pick" data-n="4" aria-pressed="false" data-t-aria="labels.quad"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3.5h10"/><path d="M12 3.5 L14.4 7.4 L12.0 11.4 L14.4 15.3 L12.0 19.3"/><circle cx="14.4" cy="7.4" r="2.0" fill="currentColor" stroke="none"/><circle cx="12.0" cy="11.4" r="2.0" fill="currentColor" stroke="none"/><circle cx="14.4" cy="15.3" r="2.0" fill="currentColor" stroke="none"/><circle cx="12.0" cy="19.3" r="2.0" fill="currentColor" stroke="none"/></svg></button>
+        </div>
+        <select id="mode-select" hidden>
+          <option value="1"></option><option value="2" selected></option><option value="3"></option><option value="4"></option>
+        </select>
         <button type="button" class="info" aria-controls="type-help" data-t-aria="labels.typeInfoAria"></button>
       </div>
       <div class="info-note" id="controls-help" hidden data-t-html="controls.note"></div>

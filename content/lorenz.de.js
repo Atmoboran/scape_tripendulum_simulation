@@ -69,7 +69,8 @@ window.TEXTS.lorenz = {
     },
     shape: {
       title: 'Was zeigt der Schmetterling?',
-      body: '<p>Der Schmetterling ist zunächst eine geometrische Darstellung des Systems. Er zeigt, dass sich die Entwicklung des Systems bevorzugt in zwei Bereichen abspielt, zwischen denen es immer wieder wechselt. Seine Bahn ist weder eine geschlossene Schleife noch eine völlig ungeordnete Bewegung: Sie ist <b>strukturiert, aber nicht periodisch</b>.</p>' +
+      body: '<p><b>Die hellgraue Linie</b> ist eine einzige, sehr lange Bahn des Modells: Ein Punkt wurde viele tausend Schritte durch die Gleichungen geschickt, und jede Stelle, an der er war, ist eingezeichnet. Nach kurzer Zeit landet jeder Startpunkt auf dieser Form und bleibt für immer darauf – darum heißt sie <b>Attraktor</b> („Anzieher“). Rot und Blau laufen also immer auf diesen grauen Bahnen entlang; die Linie zeigt, welche Wetterlagen in diesem Modell überhaupt möglich sind, aber nicht, wann welche kommt.</p>' +
+        '<p>Der Schmetterling ist zunächst eine geometrische Darstellung des Systems. Er zeigt, dass sich die Entwicklung des Systems bevorzugt in zwei Bereichen abspielt, zwischen denen es immer wieder wechselt. Seine Bahn ist weder eine geschlossene Schleife noch eine völlig ungeordnete Bewegung: Sie ist <b>strukturiert, aber nicht periodisch</b>.</p>' +
         '<p>Daraus ergibt sich eine wichtige Erkenntnis. Ein System kann gleichzeitig drei Eigenschaften besitzen:</p>' +
         '<ul><li>Es folgt festen Regeln.</li><li>Es erzeugt komplizierte, nicht periodische Bewegungen.</li><li>Seine langfristige Entwicklung ist empfindlich gegenüber kleinen Anfangsunterschieden.</li></ul>' +
         '<p>Man kann die gesamte Idee auf einen einzigen Gedanken reduzieren:</p>' +
